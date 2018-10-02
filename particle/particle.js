@@ -102,10 +102,6 @@ module.exports = function(RED) {
 					shape: "dot",
 					text: "Reconnecting..."
 				});
-
-				setTimeout(function() {
-					particlemodule.emit("processSSE", {});
-				}, this.timeoutDelay);
 			}
 
 		});
@@ -291,15 +287,6 @@ module.exports = function(RED) {
 		// Execute actual Publish Event call
 		this.on("callPublish", function() {
 			var url = this.baseurl.host + ":" + this.baseurl.port + "/v1/devices/events";
-/*
-			
-			if(this.evtname.length > 0 && this.evtname !== ""){ //Catch blank event name
-				var tmpName = this.evtname;
-			}else{
-				if(this.consolelog) console.log("(ParticlePublish) overriding blank event name.");
-				var tmpName = "NodeRed";
-			}
-			*/
 			
 			if(this.consolelog) {
 				console.log("(ParticlePublish) Calling function...");
