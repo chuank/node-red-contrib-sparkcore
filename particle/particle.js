@@ -102,10 +102,6 @@ module.exports = function(RED) {
 					shape: "dot",
 					text: "Reconnecting..."
 				});
-
-				setTimeout(function() {
-					particlemodule.emit("processSSE", {});
-				}, this.timeoutDelay);
 			}
 
 		});
@@ -174,6 +170,160 @@ module.exports = function(RED) {
 	// register ParticleSSE node
 	RED.nodes.registerType("ParticleSSE in", ParticleSSE, {});
 	// end SSE (Server-Sent-Event) Subscription
+
+	
+	
+	// *********************************************************************
+	// ParticlePublish node - base module for submitting events to Particle Cloud
+	// *********************************************************************
+	function ParticlePublish(n) {
+		// note: 
+		// the node-RED 'n' object refers to a node's instance configuration and so is unique between ParticlePublish nodes
+
+		var particlemodule = null;
+
+		RED.nodes.createNode(this, n);
+
+		particlemodule = this;
+
+		// Get all properties from node instance settings
+		this.config = n;
+		this.param = n.param;
+		this.evtname = n.evtname;
+		this.baseurl = RED.nodes.getNode(n.baseurl);
+		this.evtnametopic = n.evtnametopic;
+		this.consolelog = n.consolelog;
+		this.timeoutDelay = 5; // ms
+
+		// keep track of updated state (for updating status icons)
+		this.propChanged = false;
+
+		// console.log("(ParticlePublish) INIT cloud url:", Object.keys(this.baseurl));
+		// console.log("(ParticlePublish) INIT access token:", this.baseurl.accesstoken);
+
+		(this.baseurl.host === "https://api.particle.io") ? this.isLocal = false: this.isLocal = true;
+
+		if (this.baseurl.accesstoken == null || this.baseurl.accesstoken === "") {
+			this.status({
+				fill: "red",
+				shape: "dot",
+				text: ""
+			});
+			this.error("No Particle access token in configuration node");
+		} else {
+			this.status({});
+		}
+
+
+		// Called when there an input from upstream node(s)
+		this.on("input", function(msg) {
+			// Retrieve all parameters from Message
+			var validOp = false;
+			var val = msg;
+			var execFunc = false;
+
+			// ignore if incoming message is invalid; otherwise store incoming message as new event name
+			if (val != null) {
+				if(this.evtnametopic && val.topic.length > 0){
+					this.evtname = val.topic;
+					validOp = execFunc = true;
+					if(this.consolelog) console.log("(ParticlePublish) call:", this.param);
+				}else{
+					if (val.topic === "evtname" && this.evtnametopic === false ) {
+						this.evtname = val.payload;
+						this.propChanged = true;
+						if(this.consolelog) console.log("(ParticlePublish) input new eventName:", this.evtname);
+						validOp = true;
+					} else {
+						validOp = execFunc = true;
+						if(this.consolelog) console.log("(ParticlePublish) call:", this.param);
+					}
+				}
+				
+				
+			}
+
+			if (validOp) {
+				// signal to user that incoming messages have modified node settings
+				if(execFunc) {
+					this.status({
+						fill: "blue",
+						shape: "dot",
+						text: this.evtname + ":" + val.payload + " SENT"
+					});
+				} else {
+					this.status({
+						fill: "green",
+						shape: "ring",
+						text: val.topic + " changed to " + val.payload
+					});
+				}
+
+
+				setTimeout(function() {
+					particlemodule.emit("processSSE", {});
+				}, this.timeoutDelay);
+			}
+			
+			if (execFunc) {
+				//val = msg.payload;
+				// Retrieve payload as param
+				if (val && val.payload && val.payload.length > 0) {
+					this.param = val.payload;
+				}
+				
+				if(this.evtname.length === 0 || this.evtname === ""){ //Catch blank event name
+					this.evtname = "NodeRed";
+				}
+				
+				setTimeout(function() {
+					particlemodule.emit("callPublish", {});
+				}, this.timeoutDelay);
+			}
+			
+
+		});
+
+		// Execute actual Publish Event call
+		this.on("callPublish", function() {
+			var url = this.baseurl.host + ":" + this.baseurl.port + "/v1/devices/events";
+			
+			if(this.consolelog) {
+				console.log("(ParticlePublish) Calling function...");
+				console.log("\tURL:", url);
+				console.log("\Event Name:", this.evtname);
+				console.log("\tParameter(s):", this.param);
+			}
+
+			// build POST data and publish Particle Event
+			Request.post(
+				url, {
+					form: {
+						access_token: this.baseurl.accesstoken,
+						name: this.evtname,
+						data: this.param
+						
+					}
+				},
+				function(error, response, body) {
+					// If not error then prepare message and send
+					if (!error && response.statusCode == 200) {
+						var data = JSON.parse(body);
+						var msg = {
+							raw: data,
+							payload: data.return_value,
+							id: data.id
+						};
+						particlemodule.send(msg);
+					}
+				}
+			);
+		});
+		
+	}
+	// register ParticlePublish node
+	RED.nodes.registerType("ParticlePublish out", ParticlePublish, {});
+	// end ParticlePublish
 
 
 	// ***************************************************************************
@@ -538,6 +688,13 @@ module.exports = function(RED) {
 	ParticleSSE.prototype.close = function() {
 		if (this.es != null) {
 			if(this.consolelog) console.log("(Particle Node) EventSource closed.");
+			this.es.close();
+		}
+	};
+
+	ParticlePublish.prototype.close = function() {
+		if (this.es != null) {
+			if(this.consolelog) console.log("(Particle Node) closed.");
 			this.es.close();
 		}
 	};
