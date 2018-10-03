@@ -54,7 +54,7 @@ FAQ
 ---
 
   **Is this the same thing as the Particle IoT Rules Engine?**  
-  Conceptually, they are identical. `node-red-contrib-particle` has been around as an open-source project and maintained since 2015, when Node-RED was still in its early stages. The Particle IoT Rules Engine is a separate product delivered by Particle that runs atop the same Node-RED framework. From the early documentation, it appears that the IoT Rules Engine node possesses very similar node configuration options for each Particle node. `node-red-contrib-particle` is free for use, but requires you to set up your own Node-RED environment.
+  Conceptually, they are identical. `node-red-contrib-particle` has been around as an open-source project and maintained since 2015, when Node-RED was still in its early stages. The Particle IoT Rules Engine is a separate product delivered by Particle.io that runs atop the same Node-RED framework. From the early documentation, it appears that the IoT Rules Engine node possesses very similar node configuration options for each Particle node. `node-red-contrib-particle` is free for use, but requires you to set up your own Node-RED environment. I would imagine that the IoT Rules Engine provides a faster entry point to the Node-RED environment.
 
   **I keep getting an Error in the ParticleSSE node!**  
   It's likely your Particle.io access token is incorrect. Regenerate a new token in build.particle.io, and try again with the new token in the configuration node.

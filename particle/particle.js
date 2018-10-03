@@ -260,8 +260,8 @@ module.exports = function(RED) {
 					// alternative usage mode: if user has selected the "Use topic as Event Name?" option
 					this.evtname = val.topic;
 					this.param = val.payload;
-					validOp = execPub = true;
 					if (this.consolelog) console.log("(ParticlePublish) evtnametopic publish Event:", this.evtname, ":", this.param);
+					validOp = execPub = true;
 				} else if ((val.topic == null || val.topic == "") && val.payload != null) {
 					// 'shortcut' mode - easier way to publish the Event without specifying "param" as topic
 					// a Particle Publish Event has the option of sending a data string along with the published Event
@@ -310,7 +310,7 @@ module.exports = function(RED) {
 				}
 
 				setTimeout(function() {
-					particlemodule.emit("callPublish", {});
+					particlemodule.emit("processPublish", {});
 				}, this.timeoutDelay);
 			}
 
@@ -504,7 +504,7 @@ module.exports = function(RED) {
 				}
 
 				setTimeout(function() {
-					particlemodule.emit("callFunc", {});
+					particlemodule.emit("processFunc", {});
 				}, this.timeoutDelay);
 			}
 
