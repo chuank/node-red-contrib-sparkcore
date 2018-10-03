@@ -8,9 +8,9 @@ var querystring = require("querystring");
 
 module.exports = function(RED) {
 
-// ******************************************
-// Configuration module - handles credentials
-// ******************************************
+	// ******************************************
+	// Configuration module - handles credentials
+	// ******************************************
 	function ParticleCloudNode(n) {
 		RED.nodes.createNode(this, n);
 		this.host = n.host;
@@ -63,7 +63,7 @@ module.exports = function(RED) {
 			this.status({
 				fill: "red",
 				shape: "dot",
-				text: ""
+				text: "No Particle access token"
 			});
 			this.error("No Particle access token in configuration node");
 		} else {
@@ -85,12 +85,12 @@ module.exports = function(RED) {
 				if (val.topic === "evtname") {
 					this.evtname = val.payload;
 					this.propChanged = true;
-					if(this.consolelog) console.log("(ParticleSSE) input new eventName:", this.evtname);
+					if (this.consolelog) console.log("(ParticleSSE) input new eventName:", this.evtname);
 					validOp = true;
 				} else if (val.topic === "devid") {
 					this.devid = val.payload;
 					this.propChanged = true;
-					if(this.consolelog) console.log("(ParticleSSE) input new devID:", ((this.devid === "") ? "(noDevID/firehose)" : this.devid));
+					if (this.consolelog) console.log("(ParticleSSE) input new devID:", ((this.devid === "") ? "(noDevID/firehose)" : this.devid));
 					validOp = true;
 				}
 			}
@@ -103,6 +103,10 @@ module.exports = function(RED) {
 					text: "Reconnecting..."
 				});
 			}
+
+			setTimeout(function() {
+				particlemodule.emit("processSSE", {});
+			}, this.timeoutDelay);
 
 		});
 
@@ -117,17 +121,17 @@ module.exports = function(RED) {
 				url = this.baseurl.host + ":" + this.baseurl.port + "/v1/devices/" + this.devid + "/events/" + eventname + "?access_token=" + this.baseurl.accesstoken;
 			}
 
-			if (this.es != undefined) {
-				this.es.close(); // close any pre-existing, open connections
+			if (this.esSSE != undefined) {
+				this.esSSE.close(); // close any pre-existing, open connections
 			}
 
 			// console.log("(ParticleSSE) ES attempt to:", url);
-			this.es = new EventSource(url);
+			this.esSSE = new EventSource(url);
 
 			var evt = this.evtname;
 
 			// Add EventSource Listener
-			this.es.addEventListener(evt, function(e) {
+			this.esSSE.addEventListener(evt, function(e) {
 				var data = JSON.parse(e.data);
 				var msg = {
 					raw: data,
@@ -139,31 +143,31 @@ module.exports = function(RED) {
 				particlemodule.send(msg);
 			}, false);
 
-			this.es.onopen = function() {
+			this.esSSE.onopen = function() {
 				particlemodule.status({
 					fill: "green",
 					shape: particlemodule.propChanged ? "ring" : "dot",
 					text: particlemodule.propChanged ? "evtname/devid UPDATED OK" : "Connected"
 				});
-				if(this.consolelog) console.log("(ParticleSSE) Connected");
+				if (this.consolelog) console.log("(ParticleSSE) Connected");
 			};
 
-			this.es.onclose = function() {
+			this.esSSE.onclose = function() {
 				particlemodule.status({
 					fill: "grey",
 					shape: "dot",
 					text: "Closed"
 				});
-				if(this.consolelog) console.log("(ParticleSSE) Closed");
+				if (this.consolelog) console.log("(ParticleSSE) Closed");
 			};
 
-			this.es.onerror = function() {
+			this.esSSE.onerror = function() {
 				particlemodule.status({
 					fill: "red",
 					shape: "ring",
 					text: "Error - refer to log"
 				});
-				if(this.consolelog) console.log("(Particle SSE) Error");
+				if (this.consolelog) console.log("(Particle SSE) Error");
 			};
 		});
 	}
@@ -171,13 +175,13 @@ module.exports = function(RED) {
 	RED.nodes.registerType("ParticleSSE in", ParticleSSE, {});
 	// end SSE (Server-Sent-Event) Subscription
 
-	
-	
-	// *********************************************************************
+
+
+	// **************************************************************************
 	// ParticlePublish node - base module for submitting events to Particle Cloud
-	// *********************************************************************
+	// **************************************************************************
 	function ParticlePublish(n) {
-		// note: 
+		// note:
 		// the node-RED 'n' object refers to a node's instance configuration and so is unique between ParticlePublish nodes
 
 		var particlemodule = null;
@@ -188,10 +192,19 @@ module.exports = function(RED) {
 
 		// Get all properties from node instance settings
 		this.config = n;
-		this.param = n.param;
-		this.evtname = n.evtname;
+		this.param = n.param; // string data to send as part of published Particle Event
+		this.evtname = n.evtname; // name of Particle Event to publish
 		this.baseurl = RED.nodes.getNode(n.baseurl);
 		this.evtnametopic = n.evtnametopic;
+		this.private = n.private;
+		if(n.ttl === "" || n.ttl == null) {
+			this.ttl = 60;
+		} else {
+			this.ttl = n.ttl;
+		}
+		this.once = n.once;
+		this.interval_id = null;
+		this.repeat = n.repeat * 1000;
 		this.consolelog = n.consolelog;
 		this.timeoutDelay = 5; // ms
 
@@ -207,49 +220,66 @@ module.exports = function(RED) {
 			this.status({
 				fill: "red",
 				shape: "dot",
-				text: ""
+				text: "No Particle access token"
 			});
 			this.error("No Particle access token in configuration node");
 		} else {
 			this.status({});
 		}
 
+		if (this.once) { // run on init, if requested
+			setTimeout(function() {
+				particlemodule.emit("callPublish", {});
+			}, this.timeoutDelay);
+		}
 
-		// Called when there an input from upstream node(s)
+		// Called when there's an input from upstream node(s)
 		this.on("input", function(msg) {
 			// Retrieve all parameters from Message
 			var validOp = false;
+			var repeatChanged = false;
 			var val = msg;
-			var execFunc = false;
+			var execPub = false;
 
-			// ignore if incoming message is invalid; otherwise store incoming message as new event name
+			// ignore if incoming message is invalid
 			if (val != null) {
-				if(this.evtnametopic && val.topic.length > 0){
+				if (val.topic === "evtname") {				// set new Event name; does not trigger publish Event
+					this.evtname = val.payload;
+					this.propChanged = true;
+					if (this.consolelog) console.log("(ParticlePublish) new publish Event name:", this.evtname);
+					validOp = true;
+				} else if (val.topic === "param") {		// new param (string data); trigger publish Event AND send param
+					if (this.consolelog) console.log("(ParticlePublish) new param:", val.payload);
+					validOp = execPub = true;
+				} else if (val.topic === "repeat") {	// new repeat interval; updates interval timer (which in turn will trigger publish Event)
+					val.payload = Number(val.payload) * 1000;
+					this.repeat = val.payload;
+					if (this.consolelog) console.log("(ParticlePublish) input new repeat (ms):", this.repeat);
+					validOp = repeatChanged = true;
+				} else if (this.evtnametopic && val.topic.length > 0) {
+					// alternative usage mode: if user has selected the "Use topic as Event Name?" option
 					this.evtname = val.topic;
-					validOp = execFunc = true;
-					if(this.consolelog) console.log("(ParticlePublish) call:", this.param);
-				}else{
-					if (val.topic === "evtname" && this.evtnametopic === false ) {
-						this.evtname = val.payload;
-						this.propChanged = true;
-						if(this.consolelog) console.log("(ParticlePublish) input new eventName:", this.evtname);
-						validOp = true;
-					} else {
-						validOp = execFunc = true;
-						if(this.consolelog) console.log("(ParticlePublish) call:", this.param);
-					}
+					this.param = val.payload;
+					validOp = execPub = true;
+					if (this.consolelog) console.log("(ParticlePublish) evtnametopic publish Event:", this.evtname, ":", this.param);
+				} else if ((val.topic == null || val.topic == "") && val.payload != null) {
+					// 'shortcut' mode - easier way to publish the Event without specifying "param" as topic
+					// a Particle Publish Event has the option of sending a data string along with the published Event
+					// To streamline the use of the Publish node, any incoming payload (without a topic) should trigger the Event – but NOT send any data
+					// To send data as part of the publish Event, the upstream message MUST include the topic "param"
+					val.payload = "";
+					validOp = execPub = true;
+					if (this.consolelog) console.log("(ParticlePublish) shortcut publish Event:", this.evtname);
 				}
-				
-				
 			}
 
 			if (validOp) {
 				// signal to user that incoming messages have modified node settings
-				if(execFunc) {
+				if (execPub) {
 					this.status({
 						fill: "blue",
 						shape: "dot",
-						text: this.evtname + ":" + val.payload + " SENT"
+						text: this.evtname + ":" + this.param + " SENT"
 					});
 				} else {
 					this.status({
@@ -259,39 +289,59 @@ module.exports = function(RED) {
 					});
 				}
 
+				if (repeatChanged) {
+					// clear previous interval as we're setting this up again
+					clearInterval(this.interval_id);
+					this.interval_id = null;
 
-				setTimeout(function() {
-					particlemodule.emit("processSSE", {});
-				}, this.timeoutDelay);
+					setTimeout(function() {
+						particlemodule.emit("processPublish", {});
+					}, this.timeoutDelay);
+				}
 			}
-			
-			if (execFunc) {
-				//val = msg.payload;
-				// Retrieve payload as param
+
+			if (execPub) {
+				if (this.evtname.length === 0 || this.evtname === "") { // Catch blank event name
+					this.evtname = "NodeRED";
+				}
+
 				if (val && val.payload && val.payload.length > 0) {
 					this.param = val.payload;
 				}
-				
-				if(this.evtname.length === 0 || this.evtname === ""){ //Catch blank event name
-					this.evtname = "NodeRed";
-				}
-				
+
 				setTimeout(function() {
 					particlemodule.emit("callPublish", {});
 				}, this.timeoutDelay);
 			}
-			
 
+		});
+
+		// Perform operations based on the method parameter.
+		this.on("processPublish", function() {
+			// Check for repeat and start timer
+			if (this.repeat && !isNaN(this.repeat) && this.repeat > 0) {
+				this.interval_id = setInterval(function() {
+					particlemodule.emit("callPublish", {});
+				}, this.repeat);
+			}
+			// There is no repeat, just start once
+			else if (this.getvar && this.getvar.length > 0) {
+				setTimeout(function() {
+					particlemodule.emit("callPublish", {});
+				}, this.timeoutDelay);
+			}
 		});
 
 		// Execute actual Publish Event call
 		this.on("callPublish", function() {
 			var url = this.baseurl.host + ":" + this.baseurl.port + "/v1/devices/events";
-			
-			if(this.consolelog) {
+
+			if (this.consolelog) {
 				console.log("(ParticlePublish) Calling function...");
 				console.log("\tURL:", url);
-				console.log("\Event Name:", this.evtname);
+				console.log("\tEvent Name:", this.evtname);
+				console.log("\tPrivate:", this.private);
+				console.log("\tTTL:", this.ttl);
 				console.log("\tParameter(s):", this.param);
 			}
 
@@ -301,8 +351,9 @@ module.exports = function(RED) {
 					form: {
 						access_token: this.baseurl.accesstoken,
 						name: this.evtname,
-						data: this.param
-						
+						data: this.param,
+						private: this.private,
+						ttl: this.ttl
 					}
 				},
 				function(error, response, body) {
@@ -311,15 +362,14 @@ module.exports = function(RED) {
 						var data = JSON.parse(body);
 						var msg = {
 							raw: data,
-							payload: data.return_value,
-							id: data.id
+							payload: data.ok
 						};
 						particlemodule.send(msg);
 					}
 				}
 			);
 		});
-		
+
 	}
 	// register ParticlePublish node
 	RED.nodes.registerType("ParticlePublish out", ParticlePublish, {});
@@ -357,7 +407,7 @@ module.exports = function(RED) {
 			this.status({
 				fill: "red",
 				shape: "dot",
-				text: ""
+				text: "No Particle access token"
 			});
 			this.error("No Particle access token in configuration node");
 		} else {
@@ -394,30 +444,30 @@ module.exports = function(RED) {
 			if (val != null) {
 				if (val.topic === "devid") {
 					this.devid = val.payload;
-					if(this.consolelog) console.log("(ParticleFunc) input new devid:", this.devid);
+					if (this.consolelog) console.log("(ParticleFunc) input new devid:", this.devid);
 					validOp = true;
 				} else if (val.topic === "fname") {
 					this.fname = val.payload;
-					if(this.consolelog) console.log("(ParticleFunc) input new funcName:", this.fname);
+					if (this.consolelog) console.log("(ParticleFunc) input new funcName:", this.fname);
 					validOp = true;
 				} else if (val.topic === "param") {
 					this.param = val.payload;
-					if(this.consolelog) console.log("(ParticleFunc) input new param:", this.param);
+					if (this.consolelog) console.log("(ParticleFunc) input new param:", this.param);
 					validOp = execFunc = true;
 				} else if (val.topic === "repeat") {
 					this.repeat = Number(val.payload) * 1000;
-					if(this.consolelog) console.log("(ParticleFunc) input new repeat (ms):", this.repeat);
+					if (this.consolelog) console.log("(ParticleFunc) input new repeat (ms):", this.repeat);
 					validOp = repeatChanged = true;
-				} else if ((val.topic == null || val.topic == "") && val.payload != null) {		// 'shortcut' mode - easier way to call the function without specifying "param" as topic
+				} else if ((val.topic == null || val.topic == "") && val.payload != null) { // 'shortcut' mode - easier way to call the function without specifying "param" as topic
 					this.param = val.payload;
 					validOp = execFunc = true;
-					if(this.consolelog) console.log("(ParticleFunc) shortcut func call:", this.param);
+					if (this.consolelog) console.log("(ParticleFunc) shortcut func call:", this.param);
 				}
 			}
 
 			if (validOp) {
 				// signal to user that incoming messages have modified node settings
-				if(execFunc) {
+				if (execFunc) {
 					this.status({
 						fill: "blue",
 						shape: "dot",
@@ -479,7 +529,7 @@ module.exports = function(RED) {
 		this.on("callFunc", function() {
 			var url = this.baseurl.host + ":" + this.baseurl.port + "/v1/devices/" + this.devid + "/" + this.fname;
 
-			if(this.consolelog) {
+			if (this.consolelog) {
 				console.log("(ParticleFunc) Calling function...");
 				console.log("\tURL:", url);
 				console.log("\tDevice ID:", this.devid);
@@ -532,8 +582,8 @@ module.exports = function(RED) {
 		this.baseurl = RED.nodes.getNode(n.baseurl);
 		this.devid = n.devid;
 		this.getvar = n.getvar;
-		this.interval_id = null;
 		this.once = n.once;
+		this.interval_id = null;
 		this.repeat = n.repeat * 1000;
 		this.consolelog = n.consolelog;
 		this.timeoutDelay = 5;
@@ -547,7 +597,7 @@ module.exports = function(RED) {
 			this.status({
 				fill: "red",
 				shape: "dot",
-				text: ""
+				text: "No Particle access token"
 			});
 			this.error("No Particle access token in configuration node");
 		} else {
@@ -583,15 +633,16 @@ module.exports = function(RED) {
 			if (val != null) {
 				if (val.topic === "devid") {
 					this.devid = val.payload;
-					if(this.consolelog) console.log("(ParticleVar) input new devid:", this.devid);
+					if (this.consolelog) console.log("(ParticleVar) input new devid:", this.devid);
 					validOp = true;
 				} else if (val.topic === "getvar") {
 					this.getvar = val.payload;
-					if(this.consolelog) console.log("(ParticleVar) input new varName:", this.getvar);
+					if (this.consolelog) console.log("(ParticleVar) input new varName:", this.getvar);
 					validOp = true;
 				} else if (val.topic === "repeat") {
-					this.repeat = Number(val.payload) * 1000;
-					if(this.consolelog) console.log("(ParticleVar) input new repeat (ms):", this.repeat);
+					val.payload = Number(val.payload) * 1000;
+					this.repeat = val.payload;
+					if (this.consolelog) console.log("(ParticleVar) input new repeat (ms):", this.repeat);
 					validOp = repeatChanged = true;
 				}
 			}
@@ -601,7 +652,7 @@ module.exports = function(RED) {
 				this.status({
 					fill: "green",
 					shape: "ring",
-					text: "property(s) modified by incoming message(s)"
+					text: val.topic + " modified to " + val.payload
 				});
 
 				if (repeatChanged) {
@@ -643,7 +694,7 @@ module.exports = function(RED) {
 		this.on("getVar", function() {
 			var url = this.baseurl.host + ":" + this.baseurl.port + "/v1/devices/" + this.devid + "/" + this.getvar + "?access_token=" + this.baseurl.accesstoken;
 
-			if(this.consolelog) {
+			if (this.consolelog) {
 				console.log("(ParticleVar) Retrieving variable...");
 				console.log("\tURL:", url);
 				console.log("\tDevice ID:", this.devid);
@@ -686,29 +737,26 @@ module.exports = function(RED) {
 	// GC upon termination of nodes
 	// ****************************
 	ParticleSSE.prototype.close = function() {
-		if (this.es != null) {
-			if(this.consolelog) console.log("(Particle Node) EventSource closed.");
-			this.es.close();
+		if (this.esSSE != null) {
+			if (this.consolelog) console.log("(ParticleSSE) EventSource closed.");
+			this.esSSE.close();
 		}
 	};
 
 	ParticlePublish.prototype.close = function() {
-		if (this.es != null) {
-			if(this.consolelog) console.log("(Particle Node) closed.");
-			this.es.close();
-		}
+		// TODO: add interval?
 	};
 
 	ParticleFunc.prototype.close = function() {
 		if (this.interval_id != null) {
-			if(this.consolelog) console.log("(ParticleFunc) Interval closed.");
+			if (this.consolelog) console.log("(ParticleFunc) Interval closed.");
 			clearInterval(this.interval_id);
 		}
 	};
 
 	ParticleVar.prototype.close = function() {
 		if (this.interval_id != null) {
-			if(this.consolelog) console.log("(ParticleVar) Interval closed.");
+			if (this.consolelog) console.log("(ParticleVar) Interval closed.");
 			clearInterval(this.interval_id);
 		}
 	};

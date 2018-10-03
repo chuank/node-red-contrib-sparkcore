@@ -120,14 +120,14 @@
       <code>Cloud URL</code></br>
       <p>Add or choose an existing Particle cloud configuration.</p>
       <code>Device ID/Name</code></br>
-      <p>Enter a Device ID or Name of the target Particle Device to subscribe to. Note that for local clouds, device-specific and device-and-event specific events are <a href="https://github.com/spark/spark-server/issues/53" target="_blank">currently not supported</a>. For local cloud setups, you can a) leave the <em>Device ID/Name</em> empty, with the <em>Event Name</em> entered, or b) leave both fields empty to get the public event firehose. Filter this result in node-RED by writing your own function.</p>
+      <p>Enter a Device ID or Name of the target Particle Device to subscribe to. For local clouds, device-specific and device-and-event specific events are <a href="https://github.com/spark/spark-server/issues/53" target="_blank">currently not supported</a>. For local cloud setups, you can a) leave the <em>Device ID/Name</em> empty, with the <em>Event Name</em> entered, or b) leave both fields empty to get the public event firehose. Filter this result in Node-RED by writing your own function.</p>
       <code>Event</code></br>
       <p>Enter the SSE name broadcast by your Particle device (via <a href="https://docs.particle.io/reference/firmware/photon/#particle-publish-" target="_blank">Particle.publish()</a>).</p>
       <code>Verbose logging?</code></br>
-      <p>When enabled, log everything to node-RED logs (warning: while good for testing, this can quickly overflow your log file).</p>
+      <p>When enabled, log everything to Node-RED logs (warning: while good for testing, this can quickly overflow your log file).</p>
       <p>&nbsp;</p>
       <h4>Notes</h4>
-      <p>Sending input messages allows dynamic modification of the node&apos;s properties. Note that properties defined in each node&apos;s edit box remain and are restored when the flows are re-deployed. The labels on the nodes will also not change to reflect any new properties, but a green status ring and message will be shown next to nodes that have their properties dynamically modified by up-stream messages.</p>
+      <p>Sending input messages allows dynamic modification of the node&apos;s properties. Properties defined in each node&apos;s edit box remain and are restored when the flows are re-deployed. The labels on the nodes will also not change to reflect any new properties, but a green status ring and message will be shown next to nodes that have their properties dynamically modified by up-stream messages.</p>
       <p>When either <code>msg.evtname</code> or <code>msg.devid</code> is changed, the node will immediately reconnect and its status will change from a solid green dot to a green ring, signalling that the node&apos;s original properties as specified in the node properties have been temporarily overwritten.</p>
   <h3>References</h3>
       <ul>
@@ -140,8 +140,8 @@
   RED.nodes.registerType("ParticleSSE in", {
   	category: "Particle",
   	defaults: {
-		  baseurl: {value:"", type:"particle-cloud"},
-		  evtname: {value:"", required:true},
+  		baseurl: {value:"", type:"particle-cloud"},
+  		evtname: {value:"", required:true},
   		devid:   {value:""},
   		consolelog: {value:false}
   	},
@@ -163,9 +163,9 @@
   	labelStyle: function() {
   		return this.evtname ? "":"node_label_italic";
   	},
-	  oneditprepare: function() {
+  	oneditprepare: function() {
   	},
-	  oneditsave: function() {
+  	oneditsave: function() {
   	},
   	ondelete: function() {
   	}
@@ -182,12 +182,34 @@
     </div>
   	<div class="form-row">
         <label for="node-input-evtname"><i class="icon-tag"></i> Event</label>
-        <input type="text" id="node-input-evtname" placeholder="topic:evtname">
+        <input type="text" id="node-input-evtname" placeholder="topic:evtname; 'spark' is reserved">
+    </div>
+    <div class="form-row">
+        <label for="node-input-evtnametopic"><i class="icon-tag"></i> Use topic as Event Name?</label>
+        <input type="checkbox" id="node-input-evtnametopic">
+    </div>
+    <div class="form-row">
+        <label for="node-input-param"><i class="icon-tag"></i> Event Data</label>
+        <input type="text" id="node-input-param">
+    </div>
+    <div class="form-row">
+        <label for="node-input-private"><i class="fa fa-user-secret"></i> Publish as a private event?</label>
+        <input type="checkbox" id="node-input-private">
+    </div>
+    <div class="form-row">
+        <label for="node-input-ttl"><i class="fa fa-stopwatch"></i> TTL (sec)</label>
+        <input type="number" id="node-input-ttl" placeholder="60">
     </div>
     <br/>
     <div class="form-row">
-        <label for="node-input-evtnametopic"><i class="fa fa-bug"></i> Use topic as Event Name?</label>
-        <input type="checkbox" id="node-input-evtnametopic">
+        <label>&nbsp;</label>
+        <input type="checkbox" id="node-input-once" style="display: inline-block; width: auto; vertical-align: top;">
+        <label for="node-input-once" style="width: 70%;">Publish Event on start?</label>
+    </div>
+    <br/>
+  	<div class="form-row">
+          <label for="node-input-repeat"><i class="fa fa-repeat"></i> Repeat (sec)</label>
+          <input type="text" id="node-input-repeat" placeholder="topic:repeat">
     </div>
     <br/>
     <div class="form-row">
@@ -203,29 +225,44 @@
           <dt class="optional">topic <span class="property-type">string</span></dt>
           <dd> set topic to <code>evtname</code>.</dd>
           <dt class="required">payload <span class="property-type">string</span></dt>
-          <dd> depending on <code>topic</code>, <code>payload</code> will set new event name for the node or publish an event using <code>payload</code> as the data.</dd>
+          <dd> depending on <code>topic</code>, <code>payload</code> will set new Event name for the node or publish Particle Event using <code>payload</code> as the data (see below for details).</dd>
       </dl>
   <h3>Outputs</h3>
       <dl class="message-properties">
           <dt>raw <span class="property-type">JSON</span></dt>
-          <dd>raw response from the Particle Cloud.</dd>
+          <dd>the Particle Cloud will respond with either <code>true</code> or <code>false</code> after the Event is published.</dd>
       </dl>
   <h3>Details</h3>
       <h4>Node Properties</h4>
       <code>Cloud URL</code></br>
       <p>Add or choose an existing Particle cloud configuration.</p>
       <code>Event</code></br>
-      <p>Enter the event name you want to publish.</p>
+      <p>Enter the Particle Event name you want to publish. 'spark' is reserved by the Particle Cloud and cannot be used.</p>
       <code>Use topic as Event Name?</code></br>
-      <p>When enabled, <code>topic</code> will be used as the event name as long as it is not blank and not "evtname".</p>
+      <p>When enabled, <code>topic</code> will be used as the event name, as long as it is not blank and not "evtname", "repeat" or "param".</p>
+      <code>Event Data</code></br>
+      <p>Sets a data string to send along with the published Event (maximum 63 characters).</p>
+      <code>Private?</code></br>
+      <p>Sets the public/private status of the published Event.</p>
+      <code>TTL</code></br>
+      <p>How long the published Event should persist in the Particle Cloud.</p>
+      <code>Publish Event on start?</code></br>
+      <p>If checked, the Event will be published immediately after the node loads (i.e. on Node-RED startup).</p>
+      <code>Repeat (sec)</code><br/>
+      <p>If a repeat interval is desired, enter a value (in seconds). 0 = no repeat.</p>
       <code>Verbose logging?</code></br>
-      <p>When enabled, log everything to node-RED logs (warning: while good for testing, this can quickly overflow your log file).</p>
+      <p>When enabled, log everything to Node-RED logs (warning: while good for testing, this can quickly overflow your log file).</p>
       <p>&nbsp;</p>
       <h4>Notes</h4>
-      <p>"NodeRed" will be used as an event name if event is blank and <code>Use topic as Event Name?</code> is unchecked.  Note that properties defined in each node&apos;s edit box remain and are restored when the flows are re-deployed. The labels on the nodes will also not change to reflect any new properties, but a green status ring and message will be shown next to nodes that have their properties dynamically modified by up-stream messages.</p>
+      <p>Upstream messages with the appropriate <code>topic</code> allow for dynamic modification of the node&apos;s properties. Properties defined in each node&apos;s edit box remain and are restored when the flows are re-deployed. The labels on the nodes will also not change to reflect any new properties, but a green status ring and message will be shown next to nodes that have their properties dynamically modified by up-stream messages.</p>
+      <p>If <strong>Use topic as Event Name</strong> is enabled, send a <code>msg</code> containing the event name as <code>topic</code> and data as <code>payload</code>.</p>
+      <p>You can also set <code>msg.topic</code> to <code>evtname</code>, <code>param</code> or <code>repeat</code> to modify the Event name, data or the repeat interval respectively.</p>
+      <p>If the Event name is blank (either in the configuration of the node or updated dynamically), "NodeRED" will be used as the Event name.</p>
+      <p>Properties defined in each node&apos;s edit box remain and are restored when the flows are re-deployed. The labels on the nodes will also not change to reflect any new properties, but a green status ring and message will be shown next to nodes that have their properties dynamically modified by up-stream messages.</p>
   <h3>References</h3>
       <ul>
           <li><a href="https://docs.particle.io/" target="_blank">Particle Docs</a></li>
+          <li><a href="https://docs.particle.io/reference/api/#publish-an-event"</a></li>
           <li><a href="https://github.com/chuank/node-red-contrib-particle" target="_blank">GitHub</a> - the node&apos;s github repository</li>
       </ul>
 </script>
@@ -234,11 +271,14 @@
   RED.nodes.registerType("ParticlePublish out", {
   	category: "Particle",
   	defaults: {
-		baseurl: {value:"", type:"particle-cloud"},
-		evtname: {value:""},
-  		param:   {value:""},
+  		baseurl:      {value:"", type:"particle-cloud"},
+  		evtname:      {value:""},
   		evtnametopic: {value:false},
-  		consolelog: {value:false}
+  		param:        {value:"", validate:function(v) { return v.length < 64; } },
+  		private:      {value:false},
+  		ttl:          {value:60, validate:RED.validators.number()},
+  		repeat:       {value:0, validate:RED.validators.number()},
+  		consolelog:   {value:false}
   	},
   	color:"#00ACED",
   	inputs:1,
@@ -308,7 +348,7 @@
   <h3>Inputs</h3>
       <dl class="message-properties">
           <dt class="optional">topic <span class="property-type">string</span></dt>
-          <dd> set topic to either <code>devid</code>, <code>fname</code>, <code>param</code> or <code>repeat</code>. Note that changing <code>devid</code> or <code>fname</code> will NOT trigger the function, only <code>param</code> will. Also, changing <code>repeat</code> will cause the function to trigger at the next new interval.</dd>
+          <dd> set topic to either <code>devid</code>, <code>fname</code>, <code>param</code> or <code>repeat</code>. Changing <code>devid</code> or <code>fname</code> will NOT trigger the function, only <code>param</code> will. Also, changing <code>repeat</code> will cause the function to trigger at the next new interval.</dd>
           <dt class="optional">payload <span class="property-type">string</span></dt>
           <dd> depending on <code>topic</code>, <code>payload</code> will set new Device ID / Function name / parameter(s) for the node.<br />
           'shortcut': send just <code>msg.payload</code> without <code>msg.topic</code> to intepret the payload as a parameter string.</dd>
@@ -339,10 +379,10 @@
       <code>Repeat (sec)</code></br>
       <p>If a repeat interval is desired, enter a value (in seconds). 0 = no repeat.</p>
       <code>Verbose logging?</code></br>
-      <p>When turned on, events will be logged to node-RED logs (warning: this can quickly overflow your log file).</p>
+      <p>When turned on, events will be logged to Node-RED logs (warning: this can quickly overflow your log file).</p>
       <p>&nbsp;</p>
       <h4>Notes</h4>
-      <p>Sending input messages allows dynamic modification of the node&apos;s properties. Note that properties defined in each node&apos;s edit box remain and are restored when the flows are re-deployed. The labels on the nodes will also not change to reflect any new properties, but a green status ring and message will be shown next to nodes that have their properties dynamically modified by up-stream messages.</p>
+      <p>Sending input messages allows dynamic modification of the node&apos;s properties. Properties defined in each node&apos;s edit box remain and are restored when the flows are re-deployed. The labels on the nodes will also not change to reflect any new properties, but a green status ring and message will be shown next to nodes that have their properties dynamically modified by up-stream messages.</p>
       <p>When either <code>msg.evtname</code> or <code>msg.devid</code> is changed, the node will immediately reconnect and its status will change from a solid green dot to a green ring, signalling that the node&apos;s original properties as specified in the node properties have been temporarily overwritten.</p>
   <h3>References</h3>
       <ul>
@@ -357,10 +397,10 @@
   	defaults: {
   		baseurl: {value:"", type:"particle-cloud"},
   		devid: {value:"", required:true},
-  		fname: {value:"", required:true},
+  		fname: {value:"", required:true, validate:function(v) { return v.length < 13; } },
   		param: {value:""},
   		once: {value:false},
-  		repeat: {value:0},
+  		repeat: {value:0, validate:RED.validators.number()},
   		consolelog: {value:false}
   	},
   	color:"#00ACED",
@@ -456,10 +496,10 @@
       <code>Repeat (sec)</code><br/>
       <p>If a repeat interval is desired, enter a value (in seconds). 0 = no repeat.</p>
       <code>Verbose logging?</code><br/>
-      <p>When turned on, events will be logged to node-RED logs (warning: this can quickly overflow your log file).</p>
+      <p>When turned on, events will be logged to Node-RED logs (warning: this can quickly overflow your log file).</p>
       <p>&nbsp;</p>
       <h4>Notes</h4>
-      <p>Sending input messages allows dynamic modification of the node&apos;s properties. Note that properties defined in each node&apos;s edit box remain and are restored when the flows are re-deployed. The labels on the nodes will also not change to reflect any new properties, but a green status ring and message will be shown next to nodes that have their properties dynamically modified by up-stream messages.</p>
+      <p>Sending input messages allows dynamic modification of the node&apos;s properties. Properties defined in each node&apos;s edit box remain and are restored when the flows are re-deployed. The labels on the nodes will also not change to reflect any new properties, but a green status ring and message will be shown next to nodes that have their properties dynamically modified by up-stream messages.</p>
       <p>When either <code>msg.evtname</code> or <code>msg.devid</code> is changed, the node will immediately reconnect and its status will change from a solid green dot to a green ring, signalling that the node&apos;s original properties as specified in the node properties have been temporarily overwritten.</p>
   <h3>References</h3>
       <ul>
@@ -474,9 +514,9 @@
     	defaults: {
     		baseurl: {value:"", type:"particle-cloud"},
     		devid: {value:"", required:true},
-    		getvar: {value:"", required:true},
+    		getvar: {value:"", required:true, validate:function(v) { return v.length < 13; } },
     		once: {value:false},
-    		repeat: {value:0},
+    		repeat: {value:0, validate:RED.validators.number()},
     		consolelog: {value:false}
     	},
     	color:"#00ACED",

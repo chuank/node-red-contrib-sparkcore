@@ -15,6 +15,14 @@
     "request": "",
     "querystring": ""
   },
+  "eslintConfig": {
+    "globals": {
+      "RED": true
+    },
+    "rules": {
+      "no-console": 0
+    }
+  },
   "node-red": {
     "nodes": {
       "particle": "particle/particle.js"
@@ -27,11 +35,11 @@
     "photon",
     "electron",
     "P1",
-    "node-red",
     "iot",
     "spark",
     "device"
   ],
-  "author": "Chuan Khoo <khoo.chuan@gmail.com>",
+  "author": "Chuan Khoo <khoo.chuan@gmail.com> (https://chuank.com)",
+  "contributors": [ "Ethan (https://github.com/techlemur)" ],
   "license": "MIT"
 }
