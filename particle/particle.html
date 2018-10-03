@@ -280,7 +280,7 @@
   		param:        {value:"", validate:function(v) { return v.length < 64; } },
   		private:      {value:false},
   		ttl:          {value:60, required: false, validate:function(v) { return (v > 0 && v < 16777216); } },
-  		repeat:       {value:0, validate:function(v) { return v > 0; } },
+  		repeat:       {value:0, validate:function(v) { return v >= 0; } },
   		consolelog:   {value:false}
   	},
   	color:"#00ACED",
@@ -403,7 +403,7 @@
   		fname: {value:"", required:true, validate:function(v) { return v.length < 13; } },
   		param: {value:""},
   		once: {value:false},
-  		repeat: {value:0, validate:RED.validators.number()},
+  		repeat: {value:0, validate:function(v) { return v >= 0; } },
   		consolelog: {value:false}
   	},
   	color:"#00ACED",
@@ -519,7 +519,7 @@
     		devid: {value:"", required:true},
     		getvar: {value:"", required:true, validate:function(v) { return v.length < 13; } },
     		once: {value:false},
-    		repeat: {value:0, validate:RED.validators.number()},
+    		repeat: {value:0, validate:function(v) { return v >= 0; } },
     		consolelog: {value:false}
     	},
     	color:"#00ACED",
