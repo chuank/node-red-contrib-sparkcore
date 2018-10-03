@@ -23,9 +23,9 @@
     RED.nodes.registerType("particle-cloud",{
     	category: "config",
     	defaults: {
-    		host: {value:"https://api.particle.io",required:true},
-    		port: {value:443,required:true,validate:RED.validators.number()},
-    		accesstoken: {value:"",required:true},
+    		host: {value:"https://api.particle.io", required:true},
+    		port: {value:443, required:true, validate:RED.validators.number()},
+    		accesstoken: {value:"", required:true},
     		name: {value:""}
     	},
     	credentials: {
@@ -182,23 +182,26 @@
     </div>
   	<div class="form-row">
         <label for="node-input-evtname"><i class="icon-tag"></i> Event</label>
-        <input type="text" id="node-input-evtname" placeholder="topic:evtname; 'spark' is reserved">
+        <input type="text" id="node-input-evtname" placeholder="topic:evtname; do not use 'spark'">
     </div>
     <div class="form-row">
-        <label for="node-input-evtnametopic"><i class="icon-tag"></i> Use topic as Event Name?</label>
-        <input type="checkbox" id="node-input-evtnametopic">
+        <label>&nbsp;</label>
+        <input type="checkbox" id="node-input-evtnametopic" style="display: inline-block; width: auto; vertical-align: top;">
+        <label for="node-input-evtnametopic">Use topic as Event Name?</label>
     </div>
     <div class="form-row">
         <label for="node-input-param"><i class="icon-tag"></i> Event Data</label>
-        <input type="text" id="node-input-param">
+        <input type="text" id="node-input-param" placeholder="maximum 63 characters">
+    </div>
+    <br/>
+    <div class="form-row">
+        <label><i class="fa fa-user-secret"></i></label>
+        <input type="checkbox" id="node-input-private" style="display: inline-block; width: auto; vertical-align: top;">
+        <label for="node-input-private">Publish as a private event?</label>
     </div>
     <div class="form-row">
-        <label for="node-input-private"><i class="fa fa-user-secret"></i> Publish as a private event?</label>
-        <input type="checkbox" id="node-input-private">
-    </div>
-    <div class="form-row">
-        <label for="node-input-ttl"><i class="fa fa-stopwatch"></i> TTL (sec)</label>
-        <input type="number" id="node-input-ttl" placeholder="60">
+        <label for="node-input-ttl"><i class="fas fa-stopwatch"></i> TTL (sec)</label>
+        <input type="number" id="node-input-ttl" placeholder="default: 60s">
     </div>
     <br/>
     <div class="form-row">
@@ -208,8 +211,8 @@
     </div>
     <br/>
   	<div class="form-row">
-          <label for="node-input-repeat"><i class="fa fa-repeat"></i> Repeat (sec)</label>
-          <input type="text" id="node-input-repeat" placeholder="topic:repeat">
+        <label for="node-input-repeat"><i class="fa fa-repeat"></i> Repeat (sec)</label>
+        <input type="text" id="node-input-repeat" placeholder="topic:repeat; 0 = no repeat">
     </div>
     <br/>
     <div class="form-row">
@@ -262,7 +265,7 @@
   <h3>References</h3>
       <ul>
           <li><a href="https://docs.particle.io/" target="_blank">Particle Docs</a></li>
-          <li><a href="https://docs.particle.io/reference/api/#publish-an-event"</a></li>
+          <li><a href="https://docs.particle.io/reference/api/#publish-an-event" target="_blank"></a></li>
           <li><a href="https://github.com/chuank/node-red-contrib-particle" target="_blank">GitHub</a> - the node&apos;s github repository</li>
       </ul>
 </script>
@@ -276,8 +279,8 @@
   		evtnametopic: {value:false},
   		param:        {value:"", validate:function(v) { return v.length < 64; } },
   		private:      {value:false},
-  		ttl:          {value:60, validate:RED.validators.number()},
-  		repeat:       {value:0, validate:RED.validators.number()},
+  		ttl:          {value:60, required: false, validate:function(v) { return (v > 0 && v < 16777216); } },
+  		repeat:       {value:0, validate:function(v) { return v > 0; } },
   		consolelog:   {value:false}
   	},
   	color:"#00ACED",
@@ -334,7 +337,7 @@
   <br/>
 	<div class="form-row">
         <label for="node-input-repeat"><i class="fa fa-repeat"></i> Repeat (sec)</label>
-        <input type="text" id="node-input-repeat" placeholder="topic:repeat">
+        <input type="text" id="node-input-repeat" placeholder="topic:repeat; 0 = no repeat">
   </div>
   <br/>
   <div class="form-row">
@@ -453,7 +456,7 @@
   </div>
 	<div class="form-row">
         <label for="node-input-repeat"><i class="fa fa-repeat"></i> Repeat (sec)</label>
-        <input type="text" id="node-input-repeat" placeholder="topic.repeat">
+        <input type="text" id="node-input-repeat" placeholder="topic:repeat; 0 = no repeat">
   </div>
   <br/>
   <div class="form-row">
