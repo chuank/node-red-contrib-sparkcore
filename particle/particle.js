@@ -204,7 +204,7 @@ module.exports = function(RED) {
 		}
 		this.once = n.once;
 		this.interval_id = null;
-		this.repeat = n.repeat * 1000;
+		this.repeat = Number(n.repeat) * 1000;
 		this.consolelog = n.consolelog;
 		this.timeoutDelay = 5; // ms
 
@@ -320,12 +320,16 @@ module.exports = function(RED) {
 		this.on("processPublish", function() {
 			// Check for repeat and start timer
 			if (this.repeat && !isNaN(this.repeat) && this.repeat > 0) {
+				if (this.consolelog) console.log("(ParticlePublish) setting new repeat rate (ms):", this.repeat);
+
 				this.interval_id = setInterval(function() {
 					particlemodule.emit("callPublish", {});
 				}, this.repeat);
 			}
 			// There is no repeat, just start once
-			else if (this.getvar && this.getvar.length > 0) {
+			else if (this.evtname && this.evtname.length > 0) {
+				if (this.consolelog) console.log("(ParticlePublish) no repeat");
+
 				setTimeout(function() {
 					particlemodule.emit("callPublish", {});
 				}, this.timeoutDelay);
@@ -510,7 +514,7 @@ module.exports = function(RED) {
 		this.on("processFunc", function() {
 			// Check for repeat and start timer
 			if (this.repeat && !isNaN(this.repeat) && this.repeat > 0) {
-				// console.log("(ParticleFunc) Repeat =", this.repeat);
+				if (this.consolelog) console.log("(ParticleFunc) input new repeat (ms):", this.repeat);
 
 				this.interval_id = setInterval(function() {
 					particlemodule.emit("callFunc", {});
