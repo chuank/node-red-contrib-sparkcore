@@ -187,7 +187,7 @@
     <div class="form-row">
         <label>&nbsp;</label>
         <input type="checkbox" id="node-input-evtnametopic" style="display: inline-block; width: auto; vertical-align: top;">
-        <label for="node-input-evtnametopic">Use topic as Event Name?</label>
+        <label for="node-input-evtnametopic" style="width: 70%;">Use topic as Event Name?</label>
     </div>
     <div class="form-row">
         <label for="node-input-param"><i class="icon-tag"></i> Event Data</label>
@@ -197,7 +197,7 @@
     <div class="form-row">
         <label><i class="fa fa-user-secret"></i></label>
         <input type="checkbox" id="node-input-private" style="display: inline-block; width: auto; vertical-align: top;">
-        <label for="node-input-private">Publish as a private event?</label>
+        <label for="node-input-private" style="width: 70%;">Publish as a private event?</label>
     </div>
     <div class="form-row">
         <label for="node-input-ttl"><i class="fas fa-stopwatch"></i> TTL (sec)</label>
@@ -264,8 +264,7 @@
       <p>Properties defined in each node&apos;s edit box remain and are restored when the flows are re-deployed. The labels on the nodes will also not change to reflect any new properties, but a green status ring and message will be shown next to nodes that have their properties dynamically modified by up-stream messages.</p>
   <h3>References</h3>
       <ul>
-          <li><a href="https://docs.particle.io/" target="_blank">Particle Docs</a></li>
-          <li><a href="https://docs.particle.io/reference/api/#publish-an-event" target="_blank"></a></li>
+          <li><a href="https://docs.particle.io/reference/api/#publish-an-event" target="_blank">Particle Docs: Publish an event</a></li>
           <li><a href="https://github.com/chuank/node-red-contrib-particle" target="_blank">GitHub</a> - the node&apos;s github repository</li>
       </ul>
 </script>
@@ -279,7 +278,7 @@
   		evtnametopic: {value:false},
   		param:        {value:"", validate:function(v) { return v.length < 64; } },
   		private:      {value:false},
-  		ttl:          {value:60, required: false, validate:function(v) { return (v > 0 && v < 16777216); } },
+  		ttl:          {value:60, required: false, validate:function(v) { return (v >= 0 && v < 16777216); } },
   		repeat:       {value:0, validate:function(v) { return v >= 0; } },
   		consolelog:   {value:false}
   	},
