@@ -748,7 +748,10 @@ module.exports = function(RED) {
 	};
 
 	ParticlePublish.prototype.close = function() {
-		// TODO: add interval?
+		if (this.interval_id != null) {
+			if (this.consolelog) console.log("(ParticlePublish) Interval closed.");
+			clearInterval(this.interval_id);
+		}
 	};
 
 	ParticleFunc.prototype.close = function() {
