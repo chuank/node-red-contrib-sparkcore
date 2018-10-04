@@ -1,6 +1,6 @@
 {
   "name": "node-red-contrib-particle",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "repository": {
     "type": "git",
     "url": "https://github.com/chuank/node-red-contrib-particle"
@@ -40,6 +40,8 @@
     "device"
   ],
   "author": "Chuan Khoo <khoo.chuan@gmail.com> (https://chuank.com)",
-  "contributors": [ "Ethan (https://github.com/techlemur)" ],
+  "contributors": [
+    "Ethan (https://github.com/techlemur)"
+  ],
   "license": "MIT"
 }
