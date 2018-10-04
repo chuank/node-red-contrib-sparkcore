@@ -1,7 +1,7 @@
 node-red-contrib-particle
 -------------------------
 
-Node-RED node to connect to [Particle Devices](https://www.particle.io/), either via local cloud, or the Particle.io cloud. This can be used to connect to the Particle Core/Photon/P1/Electron, call functions, read variables or listen to Server-Sent-Events (SSEs).
+Node-RED node to connect to [Particle Devices](https://www.particle.io/), either via local cloud, or the Particle.io cloud. This can be used to connect to the Particle Core/Photon/P1/Electron, publish Events, call Functions, read Variables or listen to Server-Sent-Events (SSEs).
 
 Install
 -------
@@ -11,11 +11,11 @@ Install
 Usage
 -----
 
-Four separate nodes are provided to interact with Particle Devices – call a function, read a variable, subscribe to SSEs (server-sent events) and publish events on the Particle Cloud. The nodes have both INPUT and OUTPUTs – sending appropriate messages (using `msg.topic` & `msg.payload`) to the INPUT allows you to change the parameters dynamically.
+Four separate nodes are provided to interact with Particle Devices – call a Function, read a Variable, subscribe to SSEs (server-sent events) and publish Events on the Particle Cloud. The nodes have both INPUT and OUTPUTs – sending appropriate messages (using `msg.topic` & `msg.payload`) to the INPUT allows you to change the parameters dynamically.
 
 Where appropriate, the OUTPUT provides returned data from the Particle Cloud after a query has been made.
 
-You can also set up multiple cloud connections if you are running a standalone cloud server (`spark-server`). As development on `spark-server` seems to have stalled, you'll
+You can also set up multiple cloud connections if you are running a standalone cloud server (`spark-server`). As development on `spark-server` seems to have stalled, you'll need to work out the
 
 Please refer to the help sidebar in node-RED for full details on each node.
 
@@ -44,8 +44,8 @@ View the results via the debug node.
 FAQ
 ---
 
-  **Is this the same thing as the Particle IoT Rules Engine?**  
-  Conceptually, they are identical. From the documentation, it appears that the Particle nodes offered in the IoT Rules Engine node possess very similar node configuration options for each Particle node. `node-red-contrib-particle` has been around as an open-source project and maintained since 2015, when Node-RED was still in its early stages. The Particle IoT Rules Engine is a separate product delivered by Particle.io that runs atop the same Node-RED framework. `node-red-contrib-particle` is free for use, but requires you to set up your own Node-RED environment which may require some effort to do so (but is well worth the effort if you are looking to implement your own open-source IoT framework).
+  **Are these nodes the same thing as the Particle IoT Rules Engine?**  
+  Conceptually, they are identical. `node-red-contrib-particle` has been around as an open-source project and maintained since 2015, when Node-RED was still in its early stages. From the documentation, it appears that the Particle nodes offered in the IoT Rules Engine node possess very similar node configuration options for each Particle node. The Particle IoT Rules Engine is a separate product delivered by Particle.io that runs atop a customised Node-RED framework. `node-red-contrib-particle` here can be installed on any Node-RED setup, is free, open-source and welcomes PRs, but requires knowledge on setting up your own (read: make it secure!) Node-RED environment.
 
   **I keep getting an Error in the ParticleSSE node!**  
   It's likely your Particle.io access token is incorrect. Regenerate a new token in build.particle.io, and try again with the new token in the configuration node.
