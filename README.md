@@ -73,7 +73,7 @@ Credits
 
 This is a forked project that built off @krvarma's `node-red-contrib-sparkcore` initial work (0.0.12).
 
-Additional features implemented since `node-red-contrib-particle 0.0.2+`:
+Additional features implemented since `node-red-contrib-particle 0.0.2+` by @chuank:
 * local cloud SSE (limited) support
 * configuration node implementation
 * dynamic property setting

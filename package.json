@@ -5,7 +5,7 @@
     "type": "git",
     "url": "https://github.com/chuank/node-red-contrib-particle"
   },
-  "description": "Node-RED node to connect to Particle devices. Used to call functions, read variables or listen to Server-Sent Events (SSEs)",
+  "description": "Node-RED node to connect to Particle devices. Used to publish Events, call Functions, read Variables or listen to Server-Sent Events (SSEs)",
   "main": "particle.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
