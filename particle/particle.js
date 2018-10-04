@@ -170,6 +170,13 @@ module.exports = function(RED) {
 				if (this.consolelog) console.log("(Particle SSE) Error");
 			};
 		});
+
+		this.on("close", function() {
+			if (this.esSSE != null) {
+				if (this.consolelog) console.log("(ParticleSSE) EventSource closed.");
+				this.esSSE.close();
+			}
+		});
 	}
 	// register ParticleSSE node
 	RED.nodes.registerType("ParticleSSE in", ParticleSSE, {});
@@ -374,6 +381,12 @@ module.exports = function(RED) {
 			);
 		});
 
+		this.on("close", function() {
+			if (this.interval_id != null) {
+				if (this.consolelog) console.log("(ParticlePublish) Interval closed.");
+				clearInterval(this.interval_id);
+			}
+		});
 	}
 	// register ParticlePublish node
 	RED.nodes.registerType("ParticlePublish out", ParticlePublish, {});
@@ -436,7 +449,7 @@ module.exports = function(RED) {
 			}, this.timeoutDelay);
 		}
 
-		// Called when there an input from upstream node(s)
+		// Called when there's an input from upstream node(s)
 		this.on("input", function(msg) {
 			// Retrieve all parameters from Message
 			var validOp = false;
@@ -562,6 +575,13 @@ module.exports = function(RED) {
 					}
 				}
 			);
+		});
+
+		this.on("close", function() {
+			if (this.interval_id != null) {
+				if (this.consolelog) console.log("(ParticleFunc) Interval closed.");
+				clearInterval(this.interval_id);
+			}
 		});
 	}
 	// register ParticleFunc node
@@ -725,6 +745,13 @@ module.exports = function(RED) {
 				}
 			);
 		});
+
+		this.on("close", function() {
+			if (this.interval_id != null) {
+				if (this.consolelog) console.log("(ParticleVar) Interval closed.");
+				clearInterval(this.interval_id);
+			}
+		});
 	}
 	// register ParticleVar node
 	RED.nodes.registerType("ParticleVar", ParticleVar, {
@@ -734,39 +761,6 @@ module.exports = function(RED) {
 			}
 		}
 	});
-
-
-
-	// ****************************
-	// GC upon termination of nodes
-	// ****************************
-	ParticleSSE.prototype.close = function() {
-		if (this.esSSE != null) {
-			if (this.consolelog) console.log("(ParticleSSE) EventSource closed.");
-			this.esSSE.close();
-		}
-	};
-
-	ParticlePublish.prototype.close = function() {
-		if (this.interval_id != null) {
-			if (this.consolelog) console.log("(ParticlePublish) Interval closed.");
-			clearInterval(this.interval_id);
-		}
-	};
-
-	ParticleFunc.prototype.close = function() {
-		if (this.interval_id != null) {
-			if (this.consolelog) console.log("(ParticleFunc) Interval closed.");
-			clearInterval(this.interval_id);
-		}
-	};
-
-	ParticleVar.prototype.close = function() {
-		if (this.interval_id != null) {
-			if (this.consolelog) console.log("(ParticleVar) Interval closed.");
-			clearInterval(this.interval_id);
-		}
-	};
 
 
 	// *************************************************

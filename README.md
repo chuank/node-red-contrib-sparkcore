@@ -36,15 +36,6 @@ In node-RED, drop a Particle SSE node into the workspace, and connect a debug no
 _[todo: image]_
 
 
-Example Using ParticlePublish & ParticleSSE
--------------------------------------------
-
-```
-
-```
-
-
-
 Remember to configure the Particle node by adding your own Particle configuration credentials and access token.
 
 View the results via the debug node.
@@ -54,13 +45,13 @@ FAQ
 ---
 
   **Is this the same thing as the Particle IoT Rules Engine?**  
-  Conceptually, they are identical. `node-red-contrib-particle` has been around as an open-source project and maintained since 2015, when Node-RED was still in its early stages. The Particle IoT Rules Engine is a separate product delivered by Particle.io that runs atop the same Node-RED framework. From the early documentation, it appears that the IoT Rules Engine node possesses very similar node configuration options for each Particle node. `node-red-contrib-particle` is free for use, but requires you to set up your own Node-RED environment. I would imagine that the IoT Rules Engine provides a faster entry point to the Node-RED environment.
+  Conceptually, they are identical. From the documentation, it appears that the Particle nodes offered in the IoT Rules Engine node possess very similar node configuration options for each Particle node. `node-red-contrib-particle` has been around as an open-source project and maintained since 2015, when Node-RED was still in its early stages. The Particle IoT Rules Engine is a separate product delivered by Particle.io that runs atop the same Node-RED framework. `node-red-contrib-particle` is free for use, but requires you to set up your own Node-RED environment which may require some effort to do so (but is well worth the effort if you are looking to implement your own open-source IoT framework).
 
   **I keep getting an Error in the ParticleSSE node!**  
   It's likely your Particle.io access token is incorrect. Regenerate a new token in build.particle.io, and try again with the new token in the configuration node.
 
   **ParticleFunc/ParticleVar/ParticlePublish seems slow and laggy**  
-  Bear in mind the throttling limits for Particle event publishing. While the limit of ["1 event/sec with bursts of up to 4 allowed in 1 second"](https://docs.particle.io/reference/firmware/raspberry-pi/#particle-publish-) is embedded within the device firmware itself, the Particle Cloud server also applies its own throttling limits on the server side. Unless you have a very fast connection to the Particle Cloud server (or your own local spark-server), you have to expect the inherent latency for round trips between your Particle device, the Particle Cloud and your Node-RED server.
+  Bear in mind the throttling limits for Particle event publishing. While the limit of ["1 event/sec with bursts of up to 4 allowed in 1 second"](https://docs.particle.io/reference/firmware/raspberry-pi/#particle-publish-) is embedded within the device firmware itself, the Particle Cloud server also applies its own throttling limits on the server side. Unless you have a very fast connection to the Particle Cloud server (or your own local spark-server), you have to expect the inherent latency for round trips between your Particle device, the Particle Cloud and your Node-RED server. This can also be completely circumvented by hosting your own `spark-server` with rate limits disabled, as with the same throttling limits removed from your Particle system firmware. The scope of this is beyond what this FAQ can offer; look around to find out how it can be done.
 
 
 Local Cloud and SSE Limitations

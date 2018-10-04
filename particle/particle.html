@@ -279,6 +279,7 @@
   		param:        {value:"", validate:function(v) { return v.length < 64; } },
   		private:      {value:false},
   		ttl:          {value:60, required: false, validate:function(v) { return (v >= 0 && v < 16777216); } },
+      once:         {value:false},
   		repeat:       {value:0, validate:function(v) { return v >= 0; } },
   		consolelog:   {value:false}
   	},
@@ -307,7 +308,7 @@
 </script>
 <!-- end Publish node -->
 
-<!-- Particle function call node -->
+<!-- Particle Function call node -->
 <!-- Edit Dialog -->
 <script type="text/x-red" data-template-name="ParticleFunc out">
 	<div class="form-row">
@@ -331,7 +332,7 @@
   <div class="form-row">
       <label>&nbsp;</label>
       <input type="checkbox" id="node-input-once" style="display: inline-block; width: auto; vertical-align: top;">
-      <label for="node-input-once" style="width: 70%;">Call function on start?</label>
+      <label for="node-input-once" style="width: 70%;">Call Function on start?</label>
   </div>
   <br/>
 	<div class="form-row">
@@ -346,11 +347,11 @@
 </script>
 <!-- Help content -->
 <script type="text/x-red" data-help-name="ParticleFunc out">
-  <p>Allows you to call a cloud function registered to a specific Particle Device on a Particle cloud.</p>
+  <p>Allows you to call a cloud Function registered to a specific Particle Device on a Particle cloud.</p>
   <h3>Inputs</h3>
       <dl class="message-properties">
           <dt class="optional">topic <span class="property-type">string</span></dt>
-          <dd> set topic to either <code>devid</code>, <code>fname</code>, <code>param</code> or <code>repeat</code>. Changing <code>devid</code> or <code>fname</code> will NOT trigger the function, only <code>param</code> will. Also, changing <code>repeat</code> will cause the function to trigger at the next new interval.</dd>
+          <dd> set topic to either <code>devid</code>, <code>fname</code>, <code>param</code> or <code>repeat</code>. Changing <code>devid</code> or <code>fname</code> will NOT trigger the Function, only <code>param</code> will. Also, changing <code>repeat</code> will cause the Function to trigger at the next new interval.</dd>
           <dt class="optional">payload <span class="property-type">string</span></dt>
           <dd> depending on <code>topic</code>, <code>payload</code> will set new Device ID / Function name / parameter(s) for the node.<br />
           'shortcut': send just <code>msg.payload</code> without <code>msg.topic</code> to intepret the payload as a parameter string.</dd>
@@ -358,28 +359,28 @@
   <h3>Outputs</h3>
       <dl class="message-properties">
           <dt>raw <span class="property-type">JSON</span></dt>
-          <dd>raw output of the function.</dd>
+          <dd>raw output of the Function.</dd>
           <dt>payload <span class="property-type">string</span></dt>
-          <dd>returned data from the function (if any).</dd>
+          <dd>returned data from the Function (if any).</dd>
           <dt>id <span class="property-type">string</span></dt>
           <dd>device ID.</dd>
           <dt>published_at <span class="property-type">date</span></dt>
-          <dd>published date and time of function call.</dd>
+          <dd>published date and time of Function call.</dd>
       </dl>
   <h3>Details</h3>
       <h4>Node Properties</h4>
       <code>Cloud URL</code></br>
       <p>Add or choose an existing Particle cloud configuration.</p>
       <code>Device ID/Name</code></br>
-      <p>Enter a Device ID or Name of the target Particle Device where the cloud function originates from.</p>
+      <p>Enter a Device ID or Name of the target Particle Device where the cloud Function originates from.</p>
       <code>Cloud Function</code></br>
-      <p>Enter the name of the Particle cloud function.</p>
+      <p>Enter the name of the Particle cloud Function.</p>
       <code>Parameter</code></br>
-      <p>Provide a (maximum) 63-byte string as parameter as required by your cloud function.</p>
-      <code>Call function on start?</code></br>
-      <p>If checked, the function call will initiate immediately after the node loads (i.e. on Node-RED startup).</p>
+      <p>Provide a (maximum) 63-byte string as parameter as required by your cloud Function.</p>
+      <code>Call Function on start?</code></br>
+      <p>If checked, the Function call will initiate immediately after the node loads (i.e. on Node-RED startup).</p>
       <code>Repeat (sec)</code></br>
-      <p>If a repeat interval is desired, enter a value (in seconds). 0 = no repeat.</p>
+      <p>If a repeat interval is desired, enter a value (in seconds); 0 = no repeat.</p>
       <code>Verbose logging?</code></br>
       <p>When turned on, events will be logged to Node-RED logs (warning: this can quickly overflow your log file).</p>
       <p>&nbsp;</p>
@@ -428,7 +429,7 @@
   	}
   });
 </script>
-<!-- end Particle function call node -->
+<!-- end Particle Function call node -->
 
 
 <!-- Particle variable node -->
@@ -477,7 +478,7 @@
   <h3>Outputs</h3>
       <dl class="message-properties">
           <dt>raw <span class="property-type">JSON</span></dt>
-          <dd>raw output of the function.</dd>
+          <dd>raw output of the result.</dd>
           <dt>payload <span class="property-type">string</span></dt>
           <dd>returned data from the variable.</dd>
           <dt>id <span class="property-type">string</span></dt>
@@ -496,7 +497,7 @@
       <code>Retrieve variable on start?</code><br/>
       <p>If checked, the variable retreival will initiate immediately after the node loads (i.e. on Node-RED startup).</p>
       <code>Repeat (sec)</code><br/>
-      <p>If a repeat interval is desired, enter a value (in seconds). 0 = no repeat.</p>
+      <p>If a repeat interval is desired, enter a value (in seconds); 0 = no repeat.</p>
       <code>Verbose logging?</code><br/>
       <p>When turned on, events will be logged to Node-RED logs (warning: this can quickly overflow your log file).</p>
       <p>&nbsp;</p>
