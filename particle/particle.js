@@ -17,16 +17,14 @@ module.exports = function(RED) {
 		this.port = n.port;
 		this.name = n.name;
 
-		if (this.credentials && this.credentials.hasOwnProperty("accesstoken")) {
-			this.accesstoken = this.credentials.accesstoken;
-		}
+		// if (this.credentials && this.credentials.hasOwnProperty("accesstoken")) {
+		// 	this.accesstoken = this.credentials.accesstoken;
+		// }
 	}
 	// register the existence of the Particle Cloud credentials configuration node
 	RED.nodes.registerType("particle-cloud", ParticleCloudNode, {
 		credentials: {
-			accesstoken: {
-				type: "password"
-			}
+			accesstoken: {type: "password"}
 		}
 	});
 
@@ -47,19 +45,16 @@ module.exports = function(RED) {
 		this.config = n;
 		this.devid = n.devid;
 		this.evtname = n.evtname;
-		this.baseurl = RED.nodes.getNode(n.baseurl);
+		this.pcloud = RED.nodes.getNode(n.pcloud);
 		this.consolelog = n.consolelog;
 		this.timeoutDelay = 5; // ms
 
 		// keep track of updated state (for updating status icons)
 		this.propChanged = false;
 
-		// console.log("(ParticleSSE) INIT cloud url:", Object.keys(this.baseurl));
-		// console.log("(ParticleSSE) INIT access token:", this.baseurl.accesstoken);
+		(this.pcloud.host === "https://api.particle.io") ? this.isLocal = false: this.isLocal = true;
 
-		(this.baseurl.host === "https://api.particle.io") ? this.isLocal = false: this.isLocal = true;
-
-		if (this.baseurl.accesstoken == null || this.baseurl.accesstoken === "") {
+		if (this.pcloud.credentials.accesstoken == null || this.pcloud.credentials.accesstoken === "") {
 			this.status({
 				fill: "red",
 				shape: "dot",
@@ -116,9 +111,9 @@ module.exports = function(RED) {
 			var url;
 			var eventname = encodeURIComponent(this.evtname);
 			if (this.isLocal || !this.devid) {
-				url = this.baseurl.host + ":" + this.baseurl.port + "/v1/events/" + eventname + "?access_token=" + this.baseurl.accesstoken;
+				url = this.pcloud.host + ":" + this.pcloud.port + "/v1/events/" + eventname + "?access_token=" + this.pcloud.credentials.accesstoken;
 			} else {
-				url = this.baseurl.host + ":" + this.baseurl.port + "/v1/devices/" + this.devid + "/events/" + eventname + "?access_token=" + this.baseurl.accesstoken;
+				url = this.pcloud.host + ":" + this.pcloud.port + "/v1/devices/" + this.devid + "/events/" + eventname + "?access_token=" + this.pcloud.credentials.accesstoken;
 			}
 
 			if (this.esSSE != undefined) {
@@ -179,7 +174,7 @@ module.exports = function(RED) {
 		});
 	}
 	// register ParticleSSE node
-	RED.nodes.registerType("ParticleSSE in", ParticleSSE, {});
+	RED.nodes.registerType("ParticleSSE in", ParticleSSE);
 	// end SSE (Server-Sent-Event) Subscription
 
 
@@ -201,7 +196,7 @@ module.exports = function(RED) {
 		this.config = n;
 		this.param = n.param; // string data to send as part of published Particle Event
 		this.evtname = n.evtname; // name of Particle Event to publish
-		this.baseurl = RED.nodes.getNode(n.baseurl);
+		this.pcloud = RED.nodes.getNode(n.pcloud);
 		this.evtnametopic = n.evtnametopic;
 		this.private = n.private;
 		if(n.ttl === "" || n.ttl == null) {
@@ -218,12 +213,9 @@ module.exports = function(RED) {
 		// keep track of updated state (for updating status icons)
 		this.propChanged = false;
 
-		// console.log("(ParticlePublish) INIT cloud url:", Object.keys(this.baseurl));
-		// console.log("(ParticlePublish) INIT access token:", this.baseurl.accesstoken);
+		(this.pcloud.host === "https://api.particle.io") ? this.isLocal = false: this.isLocal = true;
 
-		(this.baseurl.host === "https://api.particle.io") ? this.isLocal = false: this.isLocal = true;
-
-		if (this.baseurl.accesstoken == null || this.baseurl.accesstoken === "") {
+		if (this.pcloud.credentials.accesstoken == null || this.pcloud.credentials.accesstoken === "") {
 			this.status({
 				fill: "red",
 				shape: "dot",
@@ -345,7 +337,7 @@ module.exports = function(RED) {
 
 		// Execute actual Publish Event call
 		this.on("callPublish", function() {
-			var url = this.baseurl.host + ":" + this.baseurl.port + "/v1/devices/events";
+			var url = this.pcloud.host + ":" + this.pcloud.port + "/v1/devices/events";
 
 			if (this.consolelog) {
 				console.log("(ParticlePublish) Calling function...");
@@ -360,7 +352,7 @@ module.exports = function(RED) {
 			Request.post(
 				url, {
 					form: {
-						access_token: this.baseurl.accesstoken,
+						access_token: this.pcloud.credentials.accesstoken,
 						name: this.evtname,
 						data: this.param,
 						private: this.private,
@@ -389,7 +381,7 @@ module.exports = function(RED) {
 		});
 	}
 	// register ParticlePublish node
-	RED.nodes.registerType("ParticlePublish out", ParticlePublish, {});
+	RED.nodes.registerType("ParticlePublish out", ParticlePublish);
 	// end ParticlePublish
 
 
@@ -408,7 +400,7 @@ module.exports = function(RED) {
 
 		// Get all properties
 		this.config = n;
-		this.baseurl = RED.nodes.getNode(n.baseurl);
+		this.pcloud = RED.nodes.getNode(n.pcloud);
 		this.devid = n.devid;
 		this.fname = n.fname;
 		this.param = n.param;
@@ -418,9 +410,9 @@ module.exports = function(RED) {
 		this.consolelog = n.consolelog;
 		this.timeoutDelay = 5; //ms
 
-		(this.baseurl.host === "https://api.particle.io") ? this.isLocal = false: this.isLocal = true;
+		(this.pcloud.host === "https://api.particle.io") ? this.isLocal = false: this.isLocal = true;
 
-		if (this.baseurl.accesstoken == null || this.baseurl.accesstoken === "") {
+		if (this.pcloud.credentials.accesstoken == null || this.pcloud.credentials.accesstoken === "") {
 			this.status({
 				fill: "red",
 				shape: "dot",
@@ -544,7 +536,7 @@ module.exports = function(RED) {
 
 		// Execute actual Particle Device function call
 		this.on("callFunc", function() {
-			var url = this.baseurl.host + ":" + this.baseurl.port + "/v1/devices/" + this.devid + "/" + this.fname;
+			var url = this.pcloud.host + ":" + this.pcloud.port + "/v1/devices/" + this.devid + "/" + this.fname;
 
 			if (this.consolelog) {
 				console.log("(ParticleFunc) Calling function...");
@@ -558,7 +550,7 @@ module.exports = function(RED) {
 			Request.post(
 				url, {
 					form: {
-						access_token: this.baseurl.accesstoken,
+						access_token: this.pcloud.credentials.accesstoken,
 						args: this.param
 					}
 				},
@@ -585,7 +577,7 @@ module.exports = function(RED) {
 		});
 	}
 	// register ParticleFunc node
-	RED.nodes.registerType("ParticleFunc out", ParticleFunc, {});
+	RED.nodes.registerType("ParticleFunc out", ParticleFunc);
 
 
 	// ***********************************************************************
@@ -603,7 +595,7 @@ module.exports = function(RED) {
 
 		// Get all properties
 		this.config = n;
-		this.baseurl = RED.nodes.getNode(n.baseurl);
+		this.pcloud = RED.nodes.getNode(n.pcloud);
 		this.devid = n.devid;
 		this.getvar = n.getvar;
 		this.once = n.once;
@@ -612,12 +604,12 @@ module.exports = function(RED) {
 		this.consolelog = n.consolelog;
 		this.timeoutDelay = 5;
 
-		// console.log("(ParticleVar) INIT cloud url:", Object.keys(this.baseurl));
-		// console.log("(ParticleVar) INIT access token:", this.baseurl.accesstoken);
+		console.log("(ParticleVar) INIT cloud url:", this.pcloud.host);
+		console.log("(ParticleVar) INIT access token:", this.pcloud.credentials.accesstoken);
 
-		(this.baseurl.host === "https://api.particle.io") ? this.isLocal = false: this.isLocal = true;
+		(this.pcloud.host === "https://api.particle.io") ? this.isLocal = false: this.isLocal = true;
 
-		if (this.baseurl.accesstoken == null || this.baseurl.accesstoken === "") {
+		if (this.pcloud.credentials.accesstoken == null || this.pcloud.credentials.accesstoken === "") {
 			this.status({
 				fill: "red",
 				shape: "dot",
@@ -716,7 +708,7 @@ module.exports = function(RED) {
 
 		// Read Particle Device variable
 		this.on("getVar", function() {
-			var url = this.baseurl.host + ":" + this.baseurl.port + "/v1/devices/" + this.devid + "/" + this.getvar + "?access_token=" + this.baseurl.accesstoken;
+			var url = this.pcloud.host + ":" + this.pcloud.port + "/v1/devices/" + this.devid + "/" + this.getvar + "?access_token=" + this.pcloud.credentials.accesstoken;
 
 			if (this.consolelog) {
 				console.log("(ParticleVar) Retrieving variable...");
@@ -754,92 +746,86 @@ module.exports = function(RED) {
 		});
 	}
 	// register ParticleVar node
-	RED.nodes.registerType("ParticleVar", ParticleVar, {
-		credentials: {
-			devid: {
-				type: "password"
-			}
-		}
-	});
+	RED.nodes.registerType("ParticleVar", ParticleVar);
 
 
 	// *************************************************
 	// Credentials management for the configuration node
 	// *************************************************
-	RED.httpAdmin.get("/particle/:id", function(req, res) {
-		var credentials = RED.nodes.getCredentials(req.params.id);
-
-		if (credentials) {
-			res.send(JSON.stringify({
-				devid: credentials.devid
-			}));
-		} else {
-			res.send(JSON.stringify({}));
-		}
-	});
-
-	RED.httpAdmin.delete("/particle/:id", function(req, res) {
-		RED.nodes.deleteCredentials(req.params.id);
-		res.send(200);
-	});
-
-	RED.httpAdmin.post("/particle/:id", function(req, res) {
-		var body = "";
-		req.on("data", function(chunk) {
-			body += chunk;
-		});
-
-		req.on("end", function() {
-			var newCreds = querystring.parse(body);
-			var credentials = RED.nodes.getCredentials(req.params.id) || {};
-			if (newCreds.devid == null || newCreds.devid === "") {
-				delete credentials.devid;
-			} else {
-				credentials.devid = newCreds.devid;
-			}
-			RED.nodes.addCredentials(req.params.id, credentials);
-			res.send(200);
-		});
-	});
-
-	RED.httpAdmin.get("/particlecloud/:id", function(req, res) {
-		var credentials = RED.nodes.getCredentials(req.params.id);
-
-		// console.log("particleCloud getCredentials:", credentials);
-
-		if (credentials) {
-			res.send(JSON.stringify({
-				accesstoken: credentials.accesstoken
-			}));
-		} else {
-			res.send(JSON.stringify({}));
-		}
-	});
-
-	RED.httpAdmin.delete("/particlecloud/:id", function(req, res) {
-		RED.nodes.deleteCredentials(req.params.id);
-		res.send(200);
-	});
-
-	RED.httpAdmin.post("/particlecloud/:id", function(req, res) {
-		var body = "";
-		req.on("data", function(chunk) {
-			body += chunk;
-		});
-
-		req.on("end", function() {
-			var newCreds = querystring.parse(body);
-			var credentials = RED.nodes.getCredentials(req.params.id) || {};
-
-			// console.log("particleCloud postCredentials:", credentials);
-
-			if (newCreds.accesstoken === "") {
-				delete credentials.accesstoken;
-			} else {
-				credentials.accesstoken = newCreds.accesstoken || credentials.accesstoken;
-			}
-			RED.nodes.addCredentials(req.params.id, credentials);
-			res.send(200);
-		});
-	});
+	// RED.httpAdmin.get("/particle/:id", function(req, res) {
+	// 	var credentials = RED.nodes.getCredentials(req.params.id);
+	//
+	// 	if (credentials) {
+	// 		res.send(JSON.stringify({
+	// 			devid: credentials.devid
+	// 		}));
+	// 	} else {
+	// 		res.send(JSON.stringify({}));
+	// 	}
+	// });
+	//
+	// RED.httpAdmin.delete("/particle/:id", function(req, res) {
+	// 	RED.nodes.deleteCredentials(req.params.id);
+	// 	res.send(200);
+	// });
+	//
+	// RED.httpAdmin.post("/particle/:id", function(req, res) {
+	// 	var body = "";
+	// 	req.on("data", function(chunk) {
+	// 		body += chunk;
+	// 	});
+	//
+	// 	req.on("end", function() {
+	// 		var newCreds = querystring.parse(body);
+	// 		var credentials = RED.nodes.getCredentials(req.params.id) || {};
+	// 		if (newCreds.devid == null || newCreds.devid === "") {
+	// 			delete credentials.devid;
+	// 		} else {
+	// 			credentials.devid = newCreds.devid;
+	// 		}
+	// 		RED.nodes.addCredentials(req.params.id, credentials);
+	// 		res.send(200);
+	// 	});
+	// });
+	//
+	// RED.httpAdmin.get("/particlecloud/:id", function(req, res) {
+	// 	var credentials = RED.nodes.getCredentials(req.params.id);
+	//
+	// 	// console.log("particleCloud getCredentials:", credentials);
+	//
+	// 	if (credentials) {
+	// 		res.send(JSON.stringify({
+	// 			accesstoken: credentials.accesstoken
+	// 		}));
+	// 	} else {
+	// 		res.send(JSON.stringify({}));
+	// 	}
+	// });
+	//
+	// RED.httpAdmin.delete("/particlecloud/:id", function(req, res) {
+	// 	RED.nodes.deleteCredentials(req.params.id);
+	// 	res.send(200);
+	// });
+	//
+	// RED.httpAdmin.post("/particlecloud/:id", function(req, res) {
+	// 	var body = "";
+	// 	req.on("data", function(chunk) {
+	// 		body += chunk;
+	// 	});
+	//
+	// 	req.on("end", function() {
+	// 		var newCreds = querystring.parse(body);
+	// 		var credentials = RED.nodes.getCredentials(req.params.id) || {};
+	//
+	// 		// console.log("particleCloud postCredentials:", credentials);
+	//
+	// 		if (newCreds.accesstoken === "") {
+	// 			delete credentials.accesstoken;
+	// 		} else {
+	// 			credentials.accesstoken = newCreds.accesstoken || credentials.accesstoken;
+	// 		}
+	// 		RED.nodes.addCredentials(req.params.id, credentials);
+	// 		res.send(200);
+	// 	});
+	// });
 };

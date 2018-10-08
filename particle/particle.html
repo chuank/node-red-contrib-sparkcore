@@ -5,10 +5,10 @@
 <!-- Particle CONFIGURATION node -->
 <script type="text/x-red" data-template-name="particle-cloud">
     <div class="form-row">
-        <label for="node-config-input-host"><i class="fa fa-server"></i> Cloud URL</label>
+        <label for="node-config-input-host"><i class="fa fa-cloud"></i> Cloud URL</label>
         <input class="input-append-left" type="text" id="node-config-input-host" placeholder="IP or hostname" style="width:40%;">
         <label for="node-config-input-port" style="margin-left: 10px; width: 35px; "> Port</label>
-        <input type="text" id="node-config-input-port" placeholder="8080" style="width:45px">
+        <input type="text" id="node-config-input-port" placeholder="443" style="width:45px">
     </div>
     <div class="form-row">
         <label for="node-config-input-accesstoken"><i class="fa fa-key"></i> Access Token</label>
@@ -32,7 +32,7 @@
     		accesstoken: {type: "password"}
     	},
     	label: function() {
-    		return this.name || this.baseurl + ":" + this.port;
+    		return this.name || this.host + ":" + this.port;
     	},
     	oneditprepare: function() {
     		$.getJSON("particlecloud/"+this.id,function(data) {
@@ -74,8 +74,8 @@
 <!-- Edit Dialog -->
 <script type="text/x-red" data-template-name="ParticleSSE in">
     <div class="form-row">
-        <label for="node-input-baseurl"><i class="fa fa-server"></i> Cloud URL</label>
-        <input type="text" id="node-input-baseurl">
+        <label for="node-input-pcloud"><i class="fa fa-cloud"></i> Cloud URL</label>
+        <input type="text" id="node-input-pcloud">
     </div>
     <div class="form-row">
         <label for="node-input-devid"><i class="fa fa-bullseye"></i> Device ID/Name</label>
@@ -120,7 +120,7 @@
       <code>Cloud URL</code></br>
       <p>Add or choose an existing Particle cloud configuration.</p>
       <code>Device ID/Name</code></br>
-      <p>Enter a Device ID or Name of the target Particle Device to subscribe to. For local clouds, device-specific and device-and-event specific events are <a href="https://github.com/spark/spark-server/issues/53" target="_blank">currently not supported</a>. For local cloud setups, you can a) leave the <em>Device ID/Name</em> empty, with the <em>Event Name</em> entered, or b) leave both fields empty to get the public event firehose. Filter this result in Node-RED by writing your own function.</p>
+      <p>Enter a Device ID or Name of the target Particle Device to subscribe to. For local clouds, device-specific and device-and-event specific events are <a href="https://github.com/spark/spark-server/issues/53" target="_blank">currently not supported</a>. For local cloud setups, you can a) leave the <em>Device ID/Name</em> empty, with the <em>Event Name</em> entered, or b) leave both fields empty to get the public event firehose. Filter this result in Node-RED by writing your own Function.</p>
       <code>Event</code></br>
       <p>Enter the SSE name broadcast by your Particle device (via <a href="https://docs.particle.io/reference/firmware/photon/#particle-publish-" target="_blank">Particle.publish()</a>).</p>
       <code>Verbose logging?</code></br>
@@ -140,7 +140,7 @@
   RED.nodes.registerType("ParticleSSE in", {
   	category: "Particle",
   	defaults: {
-  		baseurl: {value:"", type:"particle-cloud"},
+  		pcloud: {value:"", type:"particle-cloud"},
   		evtname: {value:"", required:true},
   		devid:   {value:""},
   		consolelog: {value:false}
@@ -177,8 +177,8 @@
 <!-- Edit Dialog -->
 <script type="text/x-red" data-template-name="ParticlePublish out">
     <div class="form-row">
-        <label for="node-input-baseurl"><i class="fa fa-server"></i> Cloud URL</label>
-        <input type="text" id="node-input-baseurl">
+        <label for="node-input-pcloud"><i class="fa fa-cloud"></i> Cloud URL</label>
+        <input type="text" id="node-input-pcloud">
     </div>
   	<div class="form-row">
         <label for="node-input-evtname"><i class="icon-tag"></i> Event</label>
@@ -273,7 +273,7 @@
   RED.nodes.registerType("ParticlePublish out", {
   	category: "Particle",
   	defaults: {
-  		baseurl:      {value:"", type:"particle-cloud"},
+  		pcloud:      {value:"", type:"particle-cloud"},
   		evtname:      {value:""},
   		evtnametopic: {value:false},
   		param:        {value:"", validate:function(v) { return v.length < 64; } },
@@ -312,8 +312,8 @@
 <!-- Edit Dialog -->
 <script type="text/x-red" data-template-name="ParticleFunc out">
 	<div class="form-row">
-        <label for="node-input-baseurl"><i class="fa fa-server"></i> Cloud URL</label>
-        <input type="text" id="node-input-baseurl">
+        <label for="node-input-pcloud"><i class="fa fa-cloud"></i> Cloud URL</label>
+        <input type="text" id="node-input-pcloud">
   </div>
   <div class="form-row">
         <label for="node-input-devid"><i class="fa fa-bullseye"></i> Device ID/Name</label>
@@ -398,12 +398,12 @@
   RED.nodes.registerType("ParticleFunc out",{
   	category: "Particle",
   	defaults: {
-  		baseurl: {value:"", type:"particle-cloud"},
-  		devid: {value:"", required:true},
-  		fname: {value:"", required:true, validate:function(v) { return v.length < 13; } },
-  		param: {value:""},
-  		once: {value:false},
-  		repeat: {value:0, validate:function(v) { return v >= 0; } },
+  		pcloud:     {value:"", type:"particle-cloud"},
+  		devid:      {value:"", required:true},
+  		fname:      {value:"", required:true, validate:function(v) { return v.length < 13; } },
+  		param:      {value:""},
+  		once:       {value:false},
+  		repeat:     {value:0, validate:function(v) { return v >= 0; } },
   		consolelog: {value:false}
   	},
   	color:"#00ACED",
@@ -436,8 +436,8 @@
 <!-- Edit Dialog -->
 <script type="text/x-red" data-template-name="ParticleVar">
 	<div class="form-row">
-        <label for="node-input-baseurl"><i class="fa fa-server"></i> Cloud URL</label>
-        <input type="text" id="node-input-baseurl">
+        <label for="node-input-pcloud"><i class="fa fa-cloud"></i> Cloud URL</label>
+        <input type="text" id="node-input-pcloud">
   </div>
   <div class="form-row">
         <label for="node-input-devid"><i class="fa fa-bullseye"></i> Device ID/Name</label>
@@ -515,7 +515,7 @@
     RED.nodes.registerType("ParticleVar",{
     	category: "Particle",
     	defaults: {
-    		baseurl: {value:"", type:"particle-cloud"},
+    		pcloud: {value:"", type:"particle-cloud"},
     		devid: {value:"", required:true},
     		getvar: {value:"", required:true, validate:function(v) { return v.length < 13; } },
     		once: {value:false},
