@@ -604,9 +604,6 @@ module.exports = function(RED) {
 		this.consolelog = n.consolelog;
 		this.timeoutDelay = 5;
 
-		console.log("(ParticleVar) INIT cloud url:", this.pcloud.host);
-		console.log("(ParticleVar) INIT access token:", this.pcloud.credentials.accesstoken);
-
 		(this.pcloud.host === "https://api.particle.io") ? this.isLocal = false: this.isLocal = true;
 
 		if (this.pcloud.credentials.accesstoken == null || this.pcloud.credentials.accesstoken === "") {

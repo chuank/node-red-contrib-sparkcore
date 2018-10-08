@@ -1,7 +1,7 @@
 node-red-contrib-particle
 -------------------------
 
-Node-RED node to connect to [Particle Devices](https://www.particle.io/), either via local cloud, or the Particle.io cloud. This can be used to connect to the Particle Core/Photon/P1/Electron, publish Events, call Functions, read Variables or listen to Server-Sent-Events (SSEs).
+Node-RED node to connect to [Particle Devices](https://www.particle.io/), either via the Particle.io Cloud, or a locally installed `spark-server`. This can be used to connect to the Particle Core/Photon/P1/Electron, publish Events, call Functions, read Variables or listen to Server-Sent-Events (SSEs).
 
 Install
 -------
@@ -17,7 +17,7 @@ Where appropriate, the OUTPUT provides returned data from the Particle Cloud aft
 
 You can also set up multiple cloud connections if you are running a standalone cloud server (`spark-server`). As development on `spark-server` seems to have stalled, you'll need to explore forks done by other members of the community.
 
-Please refer to the help sidebar in node-RED for full details on each node.
+Please refer to the help sidebar in node-RED for full usage details.
 
 
 Example: Publish & SSE
@@ -68,16 +68,16 @@ You should be able to turn the built-in D7 LED on your Photon on/off. The second
 FAQ
 ---
 
-  **Are these nodes the same thing as the Particle IoT Rules Engine?**  
+  __Are these nodes the same thing as the Particle IoT Rules Engine?__  
   Conceptually, they are identical. `node-red-contrib-particle` has been around as an open-source project and maintained since 2015, when Node-RED was still in its early stages. From the IoT Rules Engine documentation, it appears that the Particle nodes offered in the IoT Rules Engine node possess very similar features and configuration options for each Particle node. The Particle IoT Rules Engine is a separate product delivered by Particle.io that runs atop a customised Node-RED framework.
 
   `node-red-contrib-particle` is intended to be installed on any Node-RED setup, is free, open-source and welcomes PRs, but requires knowledge on setting up your own (read: make it secure!) Node-RED environment.
 
-  **I keep getting an Error in the ParticleSSE node!**  
+  __I keep getting an Error in the ParticleSSE node!__  
   It's likely your Particle.io access token is incorrect. Regenerate a new token in build.particle.io, and try again with the new token in the configuration node.
 
-  **ParticleFunc/ParticleVar/ParticlePublish seems slow and laggy**  
-  Bear in mind the throttling limits for Particle event publishing. While the limit of ["1 event/sec with bursts of up to 4 allowed in 1 second"](https://docs.particle.io/reference/firmware/raspberry-pi/#particle-publish-) is embedded within the device firmware itself, the Particle Cloud server also applies its own throttling limits on the server side. Unless you have a very fast connection to the Particle Cloud server (or you are running your own local `spark-server`), expect the inherent latency for round trips between your Particle device, the Particle Cloud and your Node-RED server. This can also be circumvented by hosting your own `spark-server` with rate limits disabled, as with the same throttling limits removed from your Particle system firmware. The scope of this is beyond what this FAQ can offer; look around to find out how it can be done.
+  __ParticleFunc/ParticleVar/ParticlePublish seems slow and laggy__  
+  Bear in mind the throttling limits for Particle event publishing. While the limit of ["1 event/sec with bursts of up to 4 allowed in 1 second"](https://docs.particle.io/reference/firmware/raspberry-pi/#particle-publish-) is embedded within the device firmware itself, the Particle Cloud server also applies its own throttling limits on the server side. Unless you have a very fast connection to the Particle Cloud server (or you are running your own local `spark-server`), expect the inherent latency for round trips between your Particle device, the Particle Cloud and your Node-RED server. This can also be circumvented by hosting your own `spark-server` with its rate limits disabled, and removing the throttling limits from your Particle device's system firmware (this requires recompiling of system firmware). The scope of how these two things can be done is beyond what this FAQ can offer.
 
 
 Local Cloud and SSE Limitations
@@ -106,4 +106,6 @@ Additional features implemented since `node-red-contrib-particle v0.0.2+` by @ch
 * implementation of separate nodes for clarity
 * renaming to Particle and other cosmetic fixes.
 
-v0.0.9: introduced the ParticleFunc node for calling Particle functions from Node-RED (@techlemur)
+v0.0.9: introduced the ParticleFunc node to easily call Particle functions from within Node-RED (@techlemur)
+
+Refer to LICENSE for open-source license details.
