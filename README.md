@@ -97,6 +97,8 @@ Refer to the [official Particle documentation on the Cloud API](https://docs.par
 Credits
 -------
 
+Please refer to LICENSE for open-source license and attribution details.
+
 This is a forked project that built off @krvarma's `node-red-contrib-sparkcore` initial work (v0.0.12).
 
 Additional features implemented since `node-red-contrib-particle v0.0.2+` by @chuank:
@@ -107,5 +109,3 @@ Additional features implemented since `node-red-contrib-particle v0.0.2+` by @ch
 * renaming to Particle and other cosmetic fixes.
 
 v0.0.9: introduced the ParticleFunc node to easily call Particle functions from within Node-RED (@techlemur)
-
-Refer to LICENSE for open-source license details.
