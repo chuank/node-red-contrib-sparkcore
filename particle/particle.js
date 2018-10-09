@@ -2,11 +2,11 @@
   https://github.com/chuank/node-red-contrib-particle
 */
 
-var EventSource = require("eventsource");
-var Request = require("request");
-var querystring = require("querystring");
-
 module.exports = function(RED) {
+	"use strict";
+	var EventSource = require("eventsource");
+	var Request = require("request");
+	// var querystring = require("querystring");
 
 	// ******************************************
 	// Configuration module - handles credentials
@@ -16,10 +16,6 @@ module.exports = function(RED) {
 		this.host = n.host;
 		this.port = n.port;
 		this.name = n.name;
-
-		// if (this.credentials && this.credentials.hasOwnProperty("accesstoken")) {
-		// 	this.accesstoken = this.credentials.accesstoken;
-		// }
 	}
 	// register the existence of the Particle Cloud credentials configuration node
 	RED.nodes.registerType("particle-cloud", ParticleCloudNode, {
@@ -744,85 +740,4 @@ module.exports = function(RED) {
 	}
 	// register ParticleVar node
 	RED.nodes.registerType("ParticleVar", ParticleVar);
-
-
-	// *************************************************
-	// Credentials management for the configuration node
-	// *************************************************
-	// RED.httpAdmin.get("/particle/:id", function(req, res) {
-	// 	var credentials = RED.nodes.getCredentials(req.params.id);
-	//
-	// 	if (credentials) {
-	// 		res.send(JSON.stringify({
-	// 			devid: credentials.devid
-	// 		}));
-	// 	} else {
-	// 		res.send(JSON.stringify({}));
-	// 	}
-	// });
-	//
-	// RED.httpAdmin.delete("/particle/:id", function(req, res) {
-	// 	RED.nodes.deleteCredentials(req.params.id);
-	// 	res.send(200);
-	// });
-	//
-	// RED.httpAdmin.post("/particle/:id", function(req, res) {
-	// 	var body = "";
-	// 	req.on("data", function(chunk) {
-	// 		body += chunk;
-	// 	});
-	//
-	// 	req.on("end", function() {
-	// 		var newCreds = querystring.parse(body);
-	// 		var credentials = RED.nodes.getCredentials(req.params.id) || {};
-	// 		if (newCreds.devid == null || newCreds.devid === "") {
-	// 			delete credentials.devid;
-	// 		} else {
-	// 			credentials.devid = newCreds.devid;
-	// 		}
-	// 		RED.nodes.addCredentials(req.params.id, credentials);
-	// 		res.send(200);
-	// 	});
-	// });
-	//
-	// RED.httpAdmin.get("/particlecloud/:id", function(req, res) {
-	// 	var credentials = RED.nodes.getCredentials(req.params.id);
-	//
-	// 	// console.log("particleCloud getCredentials:", credentials);
-	//
-	// 	if (credentials) {
-	// 		res.send(JSON.stringify({
-	// 			accesstoken: credentials.accesstoken
-	// 		}));
-	// 	} else {
-	// 		res.send(JSON.stringify({}));
-	// 	}
-	// });
-	//
-	// RED.httpAdmin.delete("/particlecloud/:id", function(req, res) {
-	// 	RED.nodes.deleteCredentials(req.params.id);
-	// 	res.send(200);
-	// });
-	//
-	// RED.httpAdmin.post("/particlecloud/:id", function(req, res) {
-	// 	var body = "";
-	// 	req.on("data", function(chunk) {
-	// 		body += chunk;
-	// 	});
-	//
-	// 	req.on("end", function() {
-	// 		var newCreds = querystring.parse(body);
-	// 		var credentials = RED.nodes.getCredentials(req.params.id) || {};
-	//
-	// 		// console.log("particleCloud postCredentials:", credentials);
-	//
-	// 		if (newCreds.accesstoken === "") {
-	// 			delete credentials.accesstoken;
-	// 		} else {
-	// 			credentials.accesstoken = newCreds.accesstoken || credentials.accesstoken;
-	// 		}
-	// 		RED.nodes.addCredentials(req.params.id, credentials);
-	// 		res.send(200);
-	// 	});
-	// });
 };

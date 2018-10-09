@@ -12,8 +12,7 @@
   },
   "dependencies": {
     "eventsource": "",
-    "request": "",
-    "querystring": ""
+    "request": ""
   },
   "eslintConfig": {
     "globals": {
