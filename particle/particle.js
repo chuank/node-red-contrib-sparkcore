@@ -325,8 +325,6 @@ module.exports = function (RED) {
 					break;
 			}
 
-			that.debug("Options: " + JSON.stringify(options));
-
 			that.pcloud.particleJS.getEventStream(options)
 				.then(function (stream) {
 					// store reference to EventStream object returned by the Promise
