@@ -303,7 +303,7 @@ module.exports = function (RED) {
 			};
 
 			if (that.evtname) {
-				options.name = encodeURIComponent(that.evtname);
+				options.name = that.evtname;
 			}
 
 			let dps = encodeURIComponent(that.devprodslug);
