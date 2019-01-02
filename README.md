@@ -1,21 +1,36 @@
 node-red-contrib-particle
 -------------------------
 
-Node-RED node to connect to [Particle Devices](https://www.particle.io/), either via the Particle.io Cloud, or a locally installed `spark-server`. This can be used to connect to the Particle Core/Photon/P1/Electron, publish Events, call Functions, read Variables or listen to Server-Sent-Events (SSEs).
+Node-RED node to connect to [Particle Devices](https://www.particle.io/), either via the Particle.io Cloud, or a locally installed `spark-server`. This can be used to connect to the Particle Devices (currently: Core/Photon/P1/Electron/Argon/Boron/Xenon) to publish Events, call Functions, read Variables, listen to Server-Sent-Events (SSEs) and retrieve device details.
 
 Install
 -------
 
     npm install node-red-contrib-particle
 
+
+Upgrading
+---------
+IMPORTANT: v0.2.0 introduces a few major breaking changes as it now adopts the [Particle JS API](https://github.com/particle-iot/particle-api-js). The codebase has been updated to be in line with the latest Node-RED recommendations. The node names have also been changed for styling consistency with other nodes.
+
+The Manage Palette UI should upgrade dependencies without issue, so long as you restart your Node-RED server after. What you will encounter after the upgrade is 'missing' nodes due to the renaming of the Particle node names – please set up your Particle nodes again. Sorry.
+
+If you are upgrading from a shell, run the following:
+
+    cd ~/.node-red/node_modules
+    npm install node-red-contrib-particle
+
+(Above assumes that your Node-RED user folder is set to `~/.node-red`)
+
+
 Usage
 -----
 
-Four separate nodes are provided to interact with Particle Devices – call a Function, read a Variable, subscribe to SSEs (server-sent events) and publish Events on the Particle Cloud. The nodes have both INPUT and OUTPUTs – sending appropriate messages (using `msg.topic` & `msg.payload`) to the INPUT allows you to change the parameters dynamically.
+Five nodes are provided to interact with Particle Devices – call a Function, read a Variable, subscribe to SSEs (server-sent events), publish Events on the Particle Cloud, and a Utility node to call and view/signal devices with. The nodes have both INPUT and OUTPUTs – sending appropriate messages (using `msg.topic` & `msg.payload`) to the INPUT allows you to change the parameters dynamically.
 
-Where appropriate, the OUTPUT provides returned data from the Particle Cloud after a query has been made.
+Where appropriate, the OUTPUT provides returned JSON data from the Particle Cloud after a query has been made.
 
-You can also set up multiple cloud connections if you are running a standalone cloud server (`spark-server`). As development on `spark-server` seems to have stalled, you'll need to explore forks done by other members of the community.
+You can also set up multiple cloud connections, which is handy if you are running a standalone cloud server (`spark-server`). As development on `spark-server` seems to have stalled, you'll need to explore forks done by other members of the community.
 
 Please refer to the help sidebar in node-RED for full usage details.
 
@@ -23,17 +38,17 @@ Please refer to the help sidebar in node-RED for full usage details.
 Example: Publish & SSE
 ----------------------
 
-Import the following into Node-RED using __Menu > Import > Clipboard__. Complete cloud configuration and access token before testing. If everything is correctly configured, the Particle SSE node should print out the timestamp of the server in the debug sidebar when you click on the Inject button, which publishes a private event to the Particle Cloud.
+Import the following into Node-RED using __Menu > Import > Clipboard__. Make sure you complete cloud configuration and access token before testing. If everything is correctly configured, the Particle SSE node should print out the timestamp of the server in the debug sidebar when you click on the Inject button, which publishes a private event to the Particle Cloud.
 
 ```
-[{"id":"4e1ed5ee.a82c0c","type":"ParticleSSE in","z":"1bba2c1b.324be4","pcloud":"70ab2f2a.25f9b","evtname":"myEvent","devid":"","consolelog":false,"x":560,"y":160,"wires":[["d0201000.a0de7"]]},{"id":"5141baba.30e574","type":"inject","z":"1bba2c1b.324be4","name":"","topic":"myEvent","payload":"","payloadType":"date","repeat":"","crontab":"","once":false,"onceDelay":0.1,"x":200,"y":80,"wires":[["80bfead3.defba8"]]},{"id":"d0201000.a0de7","type":"debug","z":"1bba2c1b.324be4","name":"result","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"true","x":720,"y":160,"wires":[]},{"id":"80bfead3.defba8","type":"ParticlePublish out","z":"1bba2c1b.324be4","pcloud":"70ab2f2a.25f9b","evtname":"myEvent","evtnametopic":true,"param":"","private":true,"ttl":60,"once":false,"repeat":"0","consolelog":true,"x":460,"y":80,"wires":[[]]},{"id":"70ab2f2a.25f9b","type":"particle-cloud","z":"","host":"https://api.particle.io","port":"443","accesstoken":"__PWRD__","name":"Particle.io"}]
+[{"id":"88110acf.02ebc8","type":"inject","z":"cd291985.954df8","name":"","topic":"","payload":"","payloadType":"date","repeat":"","crontab":"","once":false,"onceDelay":0.1,"x":120,"y":60,"wires":[["d65af38a.6b537"]]},{"id":"3ff5bc39.0c7844","type":"debug","z":"cd291985.954df8","name":"result","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"payload","x":510,"y":140,"wires":[]},{"id":"d65af38a.6b537","type":"particle-pub","z":"cd291985.954df8","pcloud":"","evtname":"myEvent","param":"","productIdOrSlug":"","private":false,"evtnametopic":false,"ttl":60,"repeat":0,"once":false,"x":300,"y":60,"wires":[["f5737ed3.35db3"]]},{"id":"93630f0b.5cf93","type":"particle-SSE","z":"cd291985.954df8","pcloud":"","subscribetype":"mine","devprodslug":"__DEVPRODSLUG__","devid":"","evtname":"myEvent","strict":0,"x":320,"y":140,"wires":[["3ff5bc39.0c7844"]]},{"id":"f5737ed3.35db3","type":"debug","z":"cd291985.954df8","name":"result","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"payload","x":470,"y":60,"wires":[]}]
 ```
 
 
 Example: Function & Variables
 -----------------------------
 
-Upload this to your Photon:
+Name your Particle Device `myDevice`. Upload this to your Particle device:
 
 ```
 int aValue = 0;
@@ -58,7 +73,7 @@ int doLED(String cmd) {
 In Node-RED, import the following from __Menu > Import > Clipboard__ (don't forget to set your device name and access tokens):
 
 ```
-[{"id":"2244ae44.fdc752","type":"ParticleFunc out","z":"1bba2c1b.324be4","pcloud":"70ab2f2a.25f9b","devid":"myDevice","fname":"doLED","param":"","once":false,"repeat":"0","consolelog":false,"x":390,"y":420,"wires":[["139a92b1.04c17d"]]},{"id":"eadbd74f.855928","type":"inject","z":"1bba2c1b.324be4","name":"LED on","topic":"param","payload":"1","payloadType":"str","repeat":"","crontab":"","once":false,"onceDelay":0.1,"x":190,"y":400,"wires":[["2244ae44.fdc752"]]},{"id":"39b5dce1.62e274","type":"inject","z":"1bba2c1b.324be4","name":"LED off","topic":"param","payload":"0","payloadType":"str","repeat":"","crontab":"","once":false,"onceDelay":0.1,"x":190,"y":440,"wires":[["2244ae44.fdc752"]]},{"id":"139a92b1.04c17d","type":"debug","z":"1bba2c1b.324be4","name":"result","active":true,"tosidebar":true,"console":false,"tostatus":true,"complete":"payload","x":590,"y":420,"wires":[]},{"id":"e04e2652.0b7388","type":"ParticleVar","z":"1bba2c1b.324be4","pcloud":"70ab2f2a.25f9b","devid":"myDevice","getvar":"aValue","once":false,"repeat":0,"consolelog":false,"x":380,"y":540,"wires":[["7a3f926a.5d0b3c"]]},{"id":"283e0e5c.9a54c2","type":"inject","z":"1bba2c1b.324be4","name":"","topic":"","payload":"","payloadType":"date","repeat":"","crontab":"","once":false,"onceDelay":0.1,"x":180,"y":540,"wires":[["e04e2652.0b7388"]]},{"id":"7a3f926a.5d0b3c","type":"debug","z":"1bba2c1b.324be4","name":"result","active":true,"tosidebar":true,"console":false,"tostatus":true,"complete":"payload","x":590,"y":540,"wires":[]},{"id":"70ab2f2a.25f9b","type":"particle-cloud","z":"","host":"https://api.particle.io","port":"443","accesstoken":"__PWRD__","name":"Particle.io"}]
+[{"id":"1e5bda0c.fd5296","type":"inject","z":"cd291985.954df8","name":"LED on","topic":"param","payload":"1","payloadType":"str","repeat":"","crontab":"","once":false,"onceDelay":0.1,"x":130,"y":60,"wires":[["c657c33.592be4"]]},{"id":"81f82594.4a0048","type":"inject","z":"cd291985.954df8","name":"LED off","topic":"param","payload":"0","payloadType":"str","repeat":"","crontab":"","once":false,"onceDelay":0.1,"x":130,"y":100,"wires":[["c657c33.592be4"]]},{"id":"be1d4443.bfcb08","type":"debug","z":"cd291985.954df8","name":"result","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"payload","x":530,"y":80,"wires":[]},{"id":"ab4eb9a6.726948","type":"inject","z":"cd291985.954df8","name":"","topic":"","payload":"","payloadType":"date","repeat":"","crontab":"","once":false,"onceDelay":0.1,"x":120,"y":180,"wires":[["40f9446d.40ee6c"]]},{"id":"be1907a6.571198","type":"debug","z":"cd291985.954df8","name":"result","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"payload","x":530,"y":180,"wires":[]},{"id":"c657c33.592be4","type":"particle-func","z":"cd291985.954df8","pcloud":"","devid":"myDevice","fname":"doLED","param":"","productIdOrSlug":"","repeat":0,"once":false,"x":330,"y":80,"wires":[["be1d4443.bfcb08"]]},{"id":"40f9446d.40ee6c","type":"particle-var","z":"cd291985.954df8","pcloud":"","devid":"myDevice","getvar":"aValue","productIdOrSlug":"","repeat":0,"once":false,"x":320,"y":180,"wires":[["be1907a6.571198"]]}]
 ```
 
 You should be able to turn the built-in D7 LED on your Photon on/off. The second flow allows you to print out aValue, which is reading off the A0 pin.
@@ -99,9 +114,11 @@ Credits
 
 Please refer to LICENSE for open-source license and attribution details.
 
-This is a forked project that built off @krvarma's `node-red-contrib-sparkcore` initial work (v0.0.12).
+This is a forked project that built off @krvarma's initial work `node-red-contrib-sparkcore@v0.0.12`.
 
 Additional features implemented since `node-red-contrib-particle v0.0.2+` by @chuank:
+* product support
+* utility node
 * local cloud SSE (limited) support
 * configuration node & credentials
 * dynamic property setting

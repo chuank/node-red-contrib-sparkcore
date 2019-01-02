@@ -11,9 +11,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "particle-api-js": "",
-    "eventsource": "",
-    "request": ""
+    "particle-api-js": ""
   },
   "eslintConfig": {
     "globals": {
@@ -35,8 +33,12 @@
     "photon",
     "electron",
     "P1",
+    "boron",
+    "argon",
+    "xenon",
     "iot",
     "spark",
+    "mesh",
     "device"
   ],
   "author": "Chuan Khoo <khoo.chuan@gmail.com> (https://chuank.com)",
