@@ -5,7 +5,7 @@
 <!-- Particle CONFIGURATION node -->
 <script type="text/x-red" data-template-name="particle-cloud">
     <div class="form-row">
-        <label for="node-config-input-host"><i class="fa fa-cloud"></i> Cloud URL</label>
+        <label for="node-config-input-host"><i class="fa fa-cloud"></i> Cloud</label>
         <input class="input-append-left" type="text" id="node-config-input-host" placeholder="IP or hostname" style="width:40%;">
         <label for="node-config-input-port" style="margin-left: 10px; width: 35px; "> Port</label>
         <input type="text" id="node-config-input-port" placeholder="443" style="width:45px">
@@ -18,117 +18,109 @@
         <label for="node-config-input-name"><i class="fa fa-tag"></i> Name</label>
         <input type="text" id="node-config-input-name" placeholder="Name">
     </div>
+    <br/><br/>
+    <div class="form-tips">Particle's cloud server is <code>https://api.particle.io</code>, port <code>443</code>.
+        <br/><br/>
+        To retrieve a non-expiring access token for use in Node-RED, go to the <a href="https://build.particle.io" target="_blank">Particle Web IDE</a>, under Settings (gear icon).
+        For alternative methods, please refer to Particle's <a href="https://docs.particle.io/reference/developer-tools/cli/#particle-token" target="_blank">CLI</a> and <a href="https://docs.particle.io/reference/SDKs/javascript/#logging-in" target="_blank">API</a> reference.
+    </div>
 </script>
 <script type="text/javascript">
-    RED.nodes.registerType("particle-cloud",{
-    	category: "config",
-    	defaults: {
-    		host: {value:"https://api.particle.io", required:true},
-    		port: {value:443, required:true, validate:RED.validators.number()},
-    		accesstoken: {value:"", required:true},
-    		name: {value:""}
-    	},
-    	credentials: {
-    		accesstoken: {type: "password"}
-    	},
-    	label: function() {
-    		return this.name || this.host + ":" + this.port;
-    	},
-    	oneditprepare: function() {
-    		$.getJSON("particlecloud/"+this.id,function(data) {
-    			// console.log("(Particle CONFIG) oneditprepare:", data);
-    			if (data.accesstoken) {
-    				$("#node-config-input-accesstoken").val(data.accesstoken);
-    			}
-    		});
-    	},
-    	oneditsave: function() {
-    		var credentials = {};
-    		var newToken = $("#node-config-input-accesstoken").val();
-
-    		credentials.accesstoken = newToken;
-
-    		// console.log("(Particle CONFIG) oneditsave:");
-    		// console.log(credentials);
-
-    		$.ajax({
-    			url: "particlecloud/"+this.id,
-    			type: "POST",
-    			data: credentials,
-    			success: function(result){}
-    		});
-    	},
-    	ondelete: function() {
-    		$.ajax({
-    			url: "particlecloud/"+this.id,
-    			type: "DELETE",
-    			success: function(result){}
-    		});
-    	}
+    RED.nodes.registerType("particle-cloud", {
+        category: "config",
+        defaults: {
+            host: { value: "https://api.particle.io", required: true },
+            port: { value: 443, required: true, validate: RED.validators.number() },
+            accesstoken: { value: "", required: true },
+            name: { value: "" }
+        },
+        credentials: {
+            accesstoken: { type: "password" }
+        },
+        exportable: false,
+        paletteLabel: "Particle Cloud",
+        label: function () {
+            return this.name || this.host + ":" + this.port;
+        },
+        oneditsave: function () {
+            var newToken = $("#node-config-input-accesstoken").val().trim();
+            $("#node-config-input-accesstoken").val(newToken);
+        }
     });
 </script>
 <!-- end Particle CONFIGURATION node -->
 
 
-<!-- Particle SSE node -->
+<!-- Particle UTILITY node -->
 <!-- Edit Dialog -->
-<script type="text/x-red" data-template-name="ParticleSSE in">
+<script type="text/x-red" data-template-name="particle-util">
     <div class="form-row">
-        <label for="node-input-pcloud"><i class="fa fa-cloud"></i> Cloud URL</label>
+        <label for="node-input-pcloud"><i class="fa fa-cloud"></i> Cloud</label>
         <input type="text" id="node-input-pcloud">
     </div>
-    <div class="form-row">
+    <hr/>
+    <div class="form-row particle-util-select-row">
+        <label for=""><i class="fa fa-tasks"></i> Utility</label>
+        <div style="display: inline-block; position: relative; width: 70%; height: 20px;">
+            <select id="particle-utilitytype-select" style="width:100%">
+                <option value="listDevices">List devices claimed to the account or product</option>
+                <option value="getDevice">Get detailed information about a device</option>
+                <option value="signalDevice">Trigger rainbow pattern on device LED</option>
+            </select>
+        </div>
+        <input type="hidden" id="node-input-utilitytype">
+    </div>
+    <div class="form-row particle-utilitydevice-row hidden" id="particle-utilitydevice-row">
         <label for="node-input-devid"><i class="fa fa-bullseye"></i> Device ID/Name</label>
-        <input type="text" id="node-input-devid" placeholder="topic:devid; blank for firehose/local cloud">
-    </div>
-  	<br/>
-  	<div class="form-row">
-        <label for="node-input-evtname"><i class="icon-tag"></i> Event</label>
-        <input type="text" id="node-input-evtname" placeholder="topic:evtname">
-    </div>
-    <br/>
+        <input type="text" id="node-input-devid" style="vertical-align:top;" placeholder="topic:devid">
+    </div>    
     <div class="form-row">
-        <label for="node-input-consolelog"><i class="fa fa-bug"></i> Verbose logging?</label>
-        <input type="checkbox" id="node-input-consolelog">
+        <label for="node-input-productIdOrSlug"><i class="fa fa-cubes"></i> Product ID</label>
+        <input type="text" id="node-input-productIdOrSlug" placeholder="optional; topic:productIdOrSlug">
+    </div>    
+    <br/>
+    <div class="form-tips">
+        If Product ID / slug is used, you must provide the 24-character Device ID instead of the Device Name. 
+        <br/><br/>
+        Setting a new <code>devid</code> or <code>prodIdOrSlug</code> via an upstream topic:payload message does NOT change the text label of the node. The label will always retain the settings as defined when deployed.
+        <br/><br/>
+        Please note breaking changes after v0.1.2 - refer to Information sidebar and <a href="https://github.com/chuank/node-red-contrib-particle" target="_blank">Github page</a> for full details.
     </div>
 </script>
 <!-- Help content -->
-<script type="text/x-red" data-help-name="ParticleSSE in">
-  <p>Lets you subscribe to incoming server-sent events (SSE) on a Particle cloud (official or local) via a persistent connection.</p>
+<script type="text/x-red" data-help-name="particle-util">
+  <p>Provides a basic set of Particle JS API calls to the Particle ecosystem. It can be used to test basic operation of your Particle devices.</p>
   <h3>Inputs</h3>
       <dl class="message-properties">
           <dt class="optional">topic <span class="property-type">string</span></dt>
-          <dd> set topic to either <code>devid</code> or <code>evtname</code>.</dd>
+          <dd> set topic to either <code>devid</code> or <code>prodIdOrSlug</code>.</dd>
           <dt class="optional">payload <span class="property-type">string</span></dt>
-          <dd> depending on <code>topic</code>, <code>payload</code> will set new Device ID / Event name for the node.</dd>
+          <dd> depending on <code>topic</code>, <code>payload</code> will set new Device ID / Product ID (or slug) for the node.</dd>
       </dl>
   <h3>Outputs</h3>
       <dl class="message-properties">
-          <dt>raw <span class="property-type">JSON</span></dt>
-          <dd>raw output of the SSE.</dd>
-          <dt>evtname <span class="property-type">string</span></dt>
-          <dd>event name of the SSE.</dd>
-          <dt>payload <span class="property-type">string</span></dt>
-          <dd>event data of the SSE.</dd>
-          <dt>id <span class="property-type">string</span></dt>
-          <dd>device ID of the SSE.</dd>
-          <dt>published_at <span class="property-type">date</span></dt>
-          <dd>published date and time of the SSE.</dd>
+          <dt>payload <span class="property-type">JSON</span></dt>
+          <dd>JSON output of the utility call.</dd>
       </dl>
   <h3>Details</h3>
       <h4>Node Properties</h4>
-      <code>Cloud URL</code></br>
+      <code>Cloud</code></br>
       <p>Add or choose an existing Particle cloud configuration.</p>
+      <code>Utility</code></br>
+      <p>Choose from the following utilities:
+        <ul>
+            <li><a href="https://docs.particle.io/reference/SDKs/javascript/#signaldevice-1" target="_blank">Trigger rainbow pattern on device LED</a></li>
+            <li><a href="https://docs.particle.io/reference/SDKs/javascript/#listdevices" target="_blank">List devices claimed to the account or product</a></li>
+            <li><a href="https://docs.particle.io/reference/SDKs/javascript/#getdevice" target="_blank">Get detailed information about a device</a></li>
+        </ul>
+      </p>
       <code>Device ID/Name</code></br>
-      <p>Enter a Device ID or Name of the target Particle Device to subscribe to. For local clouds, device-specific and device-and-event specific events are <a href="https://github.com/spark/spark-server/issues/53" target="_blank">currently not supported</a>. For local cloud setups, you can a) leave the <em>Device ID/Name</em> empty, with the <em>Event Name</em> entered, or b) leave both fields empty to get the public event firehose. Filter this result in Node-RED by writing your own Function.</p>
-      <code>Event</code></br>
-      <p>Enter the SSE name broadcast by your Particle device (via <a href="https://docs.particle.io/reference/firmware/photon/#particle-publish-" target="_blank">Particle.publish()</a>).</p>
-      <code>Verbose logging?</code></br>
-      <p>When enabled, log everything to Node-RED logs (warning: while good for testing, this can quickly overflow your log file).</p>
+      <p>Enter a Device ID or Name of the target Particle Device to query.</p>
+      <code>Product ID</code></br>
+      <p>Add a Product ID or slug to call function(s) meant only for the specified Product.</p>
       <p>&nbsp;</p>
       <h4>Notes</h4>
-      <p>Sending input messages allows dynamic modification of the node&apos;s properties. Properties defined in each node&apos;s edit box remain and are restored when the flows are re-deployed. The labels on the nodes will also not change to reflect any new properties, but a green status ring and message will be shown next to nodes that have their properties dynamically modified by up-stream messages.</p>
-      <p>When either <code>msg.evtname</code> or <code>msg.devid</code> is changed, the node will immediately reconnect and its status will change from a solid green dot to a green ring, signalling that the node&apos;s original properties as specified in the node properties have been temporarily overwritten.</p>
+      <p>Sending input messages allows dynamic modification of the node&apos;s properties. Properties defined in each node&apos;s edit box remain and are restored when the flows are re-deployed. The labels on the nodes will NOT change to reflect any new properties dynamically modified by up-stream messages.</p>
   <h3>References</h3>
       <ul>
           <li><a href="https://docs.particle.io/" target="_blank">Particle Docs</a></li>
@@ -137,411 +129,705 @@
 </script>
 <!-- code -->
 <script type="text/javascript">
-  RED.nodes.registerType("ParticleSSE in", {
-  	category: "Particle",
-  	defaults: {
-  		pcloud: {value:"", type:"particle-cloud"},
-  		evtname: {value:"", required:true},
-  		devid:   {value:""},
-  		consolelog: {value:false}
-  	},
-  	color:"#00ACED",
-  	inputs:1,
-  	outputs:1,
-  	icon: "particle.png",
-  	label: function() {
-  		if (this.evtname === undefined || this.evtname === "") {    // node has not been set with event name
-  			return "ParticleSSE";
-  		} else {
-  			if(this.devid === undefined || this.devid === "") {       // no device ID provided
-  				return "SSE: " + this.evtname;
-  			} else {
-  				return "SSE (" + this.devid + "): " + this.evtname;
-  			}
-  		}
-  	},
-  	labelStyle: function() {
-  		return this.evtname ? "":"node_label_italic";
-  	},
-  	oneditprepare: function() {
-  	},
-  	oneditsave: function() {
-  	},
-  	ondelete: function() {
-  	}
-  });
+    RED.nodes.registerType("particle-util", {
+        category: "Particle",
+        color: "#00ACED",
+        defaults: {
+            pcloud: { value: "", type: "particle-cloud" },
+            utilitytype: { value: "" },
+            devid: { value: "", required: true },
+            productIdOrSlug: { value: "" }
+        },
+        icon: "particle.png",
+        inputs: 1,
+        outputs: 1,
+        outputLabels: "JSON",
+        paletteLabel: "utility",
+        label: function () {
+            let s;
+            switch (this.utilitytype) {
+                case "listDevices":
+                    s = "util: listDevices";
+                    break;
+                case "getDevice":
+                case "signalDevice":
+                    s = "util: " + this.utilitytype;
+                    if (this.devid === undefined || this.devid === "") {
+                        //
+                    } else {    // event name provided
+                        s += " (" + this.devid + ")";
+                    }
+                    break;
+                default:
+                    s = "utility";
+            }
+            return s;
+        },
+        labelStyle: function () {
+            if (this.utilitytype === undefined || this.utilitytype === "") {
+                return "node_label_italic";
+            } else {
+                return "";
+            }
+        },
+        oneditprepare: function () {
+            // clear placebo string
+            if (this.devid === "__DEVID__") {
+                $("#node-input-devid").val("");
+                this.devid = "";
+            }
+
+            $("#particle-utilitytype-select").val(this.utilitytype);
+
+            $("#particle-utilitytype-select").change(function () {
+                let id = $("#particle-utilitytype-select").val();
+                $("#node-input-utilitytype").val(id);
+
+                switch (id) {
+                    case "listDevices":
+                        $("#particle-utilitydevice-row").hide();
+                        break;
+                    case "getDevice":
+                    case "signalDevice":
+                        $("#particle-utilitydevice-row").show();
+                        break;
+                }
+            });
+
+            // call change to refresh on initial prepare
+            $("#particle-utilitytype-select").change();
+        },
+        oneditsave: function () {
+            switch ($("#particle-utilitytype-select").val()) {
+                case "listDevices":
+                    // set a placebo string to make sure required field has a value (and allow deploying)
+                    if (this.devid === undefined || this.devid === "") {
+                        $("#particle-utilitytype-select").val("__DEVID__");
+                        $("#node-input-devid").val("__DEVID__");
+                        this.devid = "__DEVID__";
+                    }
+                    break;
+                case "getDevice":
+                case "signalDevice":
+                    break;
+            }
+        }
+    });
+</script>
+<!-- end UTIL node -->
+
+<!-- Particle SSE node -->
+<!-- Edit Dialog -->
+<script type="text/x-red" data-template-name="particle-SSE">
+    <div class="form-row">
+        <label for="node-input-pcloud"><i class="fa fa-cloud"></i> Cloud</label>
+        <input type="text" id="node-input-pcloud">
+    </div>
+    <hr/>
+    <div class="form-row particle-sse-subscribe-select-row">
+        <label for=""><i class="fa fa-bullseye"></i> Subscribe</label>
+        <div style="display: inline-block; position: relative; width: 70%; height: 20px;">
+            <select id="particle-eventtype-select" style="width:100%">
+                <option value="devid">to my specific device:</option>
+                <option value="mine">to ALL of my devices</option>
+                <option value="all">to ALL Particle Events (event name required)</option>
+                <option value="productIdOrSlug">to my Product:</option>
+                <option value="orgSlug">to my Organization:</option>
+            </select>
+        </div>
+        <input type="hidden" id="node-input-subscribetype">
+    </div>
+    <div class="form-row particle-sse-devprodslug-row hidden" id="particle-sse-devprodslug-row">
+        <label for="node-input-devprodslug"></label>
+        <input type="text" id="node-input-devprodslug" placeholder="">
+    </div>
+    <div class="form-row">
+        <label for="node-input-evtname"><i class="icon-tag"></i> Event</label>
+        <input type="text" id="node-input-evtname" placeholder="required for 'ALL Particle Events'; topic:evtname">
+    </div>
+    <div class="form-row">
+        <label for="node-input-strict"></label>
+        <span>Strict matching of event name? <input type="checkbox" id="node-input-strict" style="display:inline-block; width:15px; vertical-align:baseline;"></span>
+    </div>
+    <br/>
+    <div class="form-tips">
+        Firehose subscription is <a href="https://community.particle.io/t/deprecating-subscribing-to-all-public-events/41207" target="_blank">no longer supported by Particle as of Apr 2018</a>. If subscribing to ALL Particle Events, provide an event name.
+        <br/><br/>
+        Setting a new <code>devid</code>, <code>evtname</code>, <code>prodIdOrSlug</code> or
+        <code>orgSlug</code> via an upstream topic:payload message does NOT change the text label of the
+        node. The label will always retain the settings as defined when deployed.
+        <br/><br/>
+        Please note breaking changes after v0.1.2 - refer to Information sidebar and <a href="https://github.com/chuank/node-red-contrib-particle" target="_blank">Github page</a> for full details.
+    </div>
+</script>
+<!-- Help content -->
+<script type="text/x-red" data-help-name="particle-SSE">
+    <p>Lets you subscribe to incoming server-sent events (SSE) on a Particle cloud (official or local) via a persistent connection.</p>
+    <h3>Inputs</h3>
+        <dl class="message-properties">
+            <dt class="optional">topic <span class="property-type">string</span></dt>
+            <dd> set topic to either <code>devid</code>, <code>evtname</code>, <code>strict</code>, <code>productIdOrSlug</code> or <code>orgSlug</code>.</dd>
+            <dt class="optional">payload <span class="property-type">string</span></dt>
+            <dd> depending on <code>topic</code>, <code>payload</code> will set new Device ID / Event name / strict matching / Product ID (or slug) / Organization slug for the node.</dd>
+        </dl>
+    <h3>Outputs</h3>
+        <dl class="message-properties">
+            <dt>coreid <span class="property-type">string</span></dt>
+            <dd>Device ID of the SSE.</dd>
+            <dt>data <span class="property-type">string</span></dt>
+            <dd>event data of the SSE.</dd>
+            <dt>name <span class="property-type">string</span></dt>
+            <dd>event name of the SSE.</dd>
+            <dt>published_at <span class="property-type">date</span></dt>
+            <dd>published date and time of the SSE.</dd>
+            <dt>ttl <span class="property-type">Number</span></dt>
+            <dd>TTL (in seconds) of the SSE.</dd>
+        </dl>
+    <h3>Details</h3>
+        <h4>Node Properties</h4>
+        <code>Cloud</code></br>
+        <p>Add or choose an existing Particle cloud configuration.</p>
+        <code>Subscribe</code></br>
+        <p>Choose from five different methods to subscribe to SSEs:
+            <ul>
+                <li><strong>to my specific device</strong> - provide a Device ID or name of the device under your account</li>
+                <li><strong>to ALL of my devices</strong> - essentially subscribes using the <code>mine</code> keyword, will listen to events from all devices under your account</li>
+                <li><strong>to ALL Particle Events</strong> - subscribes to ALL events from the Cloud server. An event name is required, as <a href="https://community.particle.io/t/deprecating-subscribing-to-all-public-events/41207" target="_blank">'firehose' output is no longer available</a></li>
+                <li><strong>to my Product</strong> - subscribes to events within your Product. The Product ID or slug is required</li>
+                <li><strong>to my Organization</strong> - subscribes to events within your Organization. The Organization slug is required.</li>
+            </ul>
+        <p>&nbsp;</p>            
+        <code>Event</code></br>
+        <p>Enter the SSE name to subscribe to.</p>
+        <code>Strict matching of event name?</code></br>
+        <p>By design, Particle SSEs return partial matches, i.e. subscribing to <code>foo</code> events will result in events such as <code>foo</code>, <code>foobar</code>, or <code>foo/frenzy</code> to be returned. Turning this option on will ensure only exact matches are returned.</p>
+        <p>&nbsp;</p>
+        <h4>Notes</h4>
+        <p>Sending input messages allows dynamic modification of the node&apos;s properties. Properties defined in each node&apos;s edit box remain and are restored when the flows are re-deployed. The labels on the nodes will also not change to reflect any new properties, but a green status ring and message will be shown next to nodes that have their properties dynamically modified by up-stream messages.</p>
+        <p>When any incoming upstream messages change the node&apos;s properties, the node will immediately reconnect, signalling that the node&apos;s original properties as specified in the node properties have been temporarily overwritten. The appearance of the node will NOT change.</p>
+    <h3>References</h3>
+        <ul>
+            <li><a href="https://docs.particle.io/" target="_blank">Particle Docs</a></li>
+            <li><a href="https://github.com/chuank/node-red-contrib-particle" target="_blank">GitHub</a> - the node&apos;s github repository</li>
+        </ul>
+</script>
+<!-- code -->
+<script type="text/javascript">
+    RED.nodes.registerType("particle-SSE", {
+        category: "Particle",
+        color: "#00ACED",
+        defaults: {
+            pcloud: { value: "", type: "particle-cloud" },
+            subscribetype: { value: "devid" },
+            devprodslug: { value: "", required: true },
+            devid: { value: "" },
+            evtname: { value: "" },
+            strict: { value: 0 }
+        },
+        icon: "particle.png",
+        inputs: 1,
+        outputs: 1,
+        outputLabels: "JSON",
+        paletteLabel: "SSE",
+        label: function () {
+            let s;
+            switch (this.subscribetype) {
+                case "mine":
+                    s = "SSE MINE";
+                    if (this.evtname === undefined || this.evtname === "") {
+                        s += ": all events";
+                    } else {    // event name provided
+                        s += ": " + this.evtname;
+                    }
+                    break;
+                case "all":
+                    s = "SSE ALL";
+                    if (this.evtname === undefined || this.evtname === "") {
+                        //
+                    } else {    // event name provided
+                        s += ": " + this.evtname;
+                    }
+                    break;
+                case "devid":
+                    s = "SSE device";
+
+                    if (this.devprodslug === undefined || this.devprodslug === "") {
+                        s += ": ";
+                    } else {
+                        s += " (" + this.devprodslug + "): ";
+                    }
+
+                    if (this.evtname === undefined || this.evtname === "") {
+                        s += "all events";
+                    } else {
+                        s += this.evtname;
+                    }
+                    break;
+                case "productIdOrSlug":
+                    s = "SSE product";
+
+                    if (this.devprodslug === undefined || this.devprodslug === "") {
+                        s += ": ";
+                    } else {
+                        s += " (" + this.devprodslug + "): ";
+                    }
+
+                    if (this.evtname === undefined || this.evtname === "") {
+                        s += "all events";
+                    } else {
+                        s += this.evtname;
+                    }
+                    break;
+                case "orgSlug":
+                    s = "SSE org";
+
+                    if (this.devprodslug === undefined || this.devprodslug === "") {
+                        s += ": ";
+                    } else {
+                        s += " (" + this.devprodslug + "): ";
+                    }
+
+                    if (this.evtname === undefined || this.evtname === "") {
+                        s += "all events";
+                    } else {
+                        s += this.evtname;
+                    }
+                    break;
+                default:
+                    s = "SSE";
+            }
+            return s;
+        },
+        labelStyle: function () {
+            if (this.subscribetype === undefined || this.subscribetype === "") {
+                return "node_label_italic";
+            } else {
+                return "";
+            }
+        },
+        oneditprepare: function () {
+            // clear placebo string
+            if (this.devprodslug === "__DEVPRODSLUG__") {
+                $("#node-input-devprodslug").val("");
+                this.devprodslug = "";
+            }
+
+            // restore previous selection (confirmed working)
+            $("#particle-eventtype-select").val(this.subscribetype);
+
+            $("#particle-eventtype-select").change(function () {
+                let id = $("#particle-eventtype-select").val();
+                $("#node-input-subscribetype").val(id);
+                let ph;
+                switch (id) {
+                    case "devid":
+                        ph = "device ID, topic:devid";
+                        break;
+                    case "productIdOrSlug":
+                        ph = "product ID/slug, topic:productIdOrSlug";
+                        break;
+                    case "orgSlug":
+                        ph = "Organization slug, topic:orgSlug";
+                        break;
+                }
+                $("#node-input-devprodslug").attr("placeholder", ph);
+
+                if ((id == "devid") || (id == "productIdOrSlug") || (id == "orgSlug")) {
+                    $("#particle-sse-devprodslug-row").show();
+                }
+                else {
+                    $("#particle-sse-devprodslug-row").hide();
+                }
+            });
+
+            // call change to refresh on initial prepare
+            $("#particle-eventtype-select").change();
+        },
+        oneditsave: function () {
+            switch ($("#particle-eventtype-select").val()) {
+                case "mine":
+                case "all":
+                    // set a placebo string to make sure required field has a value (and allow deploying)
+                    if (this.devprodslug === undefined || this.devprodslug === "") {
+                        $("#node-input-devprodslug").val("__DEVPRODSLUG__");
+                        $("#particle-sse-devprodslug-row").val("__DEVPRODSLUG__");
+
+                        this.devprodslug = "__DEVPRODSLUG__";
+                    }
+                    break;
+            }
+        }
+    });
 </script>
 <!-- end SSE node -->
 
 <!-- Particle Publish node -->
 <!-- Edit Dialog -->
-<script type="text/x-red" data-template-name="ParticlePublish out">
+<script type="text/x-red" data-template-name="particle-pub">
     <div class="form-row">
-        <label for="node-input-pcloud"><i class="fa fa-cloud"></i> Cloud URL</label>
+        <label for="node-input-pcloud"><i class="fa fa-cloud"></i> Cloud</label>
         <input type="text" id="node-input-pcloud">
     </div>
+    <hr/>
   	<div class="form-row">
         <label for="node-input-evtname"><i class="icon-tag"></i> Event</label>
-        <input type="text" id="node-input-evtname" placeholder="topic:evtname; do not use 'spark'">
+        <input type="text" id="node-input-evtname" placeholder="do not use 'spark'; topic:evtname">
     </div>
     <div class="form-row">
-        <label>&nbsp;</label>
-        <input type="checkbox" id="node-input-evtnametopic" style="display: inline-block; width: auto; vertical-align: top;">
-        <label for="node-input-evtnametopic" style="width: 70%;">Use topic as Event Name?</label>
+        <label for="node-input-param"><i class="fa fa-tasks"></i> Data</label>
+        <input type="text" id="node-input-param" placeholder="optional, maximum 63 characters; topic:param">
     </div>
     <div class="form-row">
-        <label for="node-input-param"><i class="icon-tag"></i> Event Data</label>
-        <input type="text" id="node-input-param" placeholder="maximum 63 characters">
+        <label for="node-input-productIdOrSlug"><i class="fa fa-cubes"></i> Product ID</label>
+        <input type="text" id="node-input-productIdOrSlug" placeholder="optional; topic:productIdOrSlug">
     </div>
     <br/>
     <div class="form-row">
-        <label><i class="fa fa-user-secret"></i></label>
+        <label for="node-input-private"><i class="fa fa-user-secret"></i></label>
         <input type="checkbox" id="node-input-private" style="display: inline-block; width: auto; vertical-align: top;">
-        <label for="node-input-private" style="width: 70%;">Publish as a private event?</label>
+        <label for="node-input-private" style="width:50%;">Publish as a private event?</label>
     </div>
     <div class="form-row">
-        <label for="node-input-ttl"><i class="fas fa-stopwatch"></i> TTL (sec)</label>
-        <input type="number" id="node-input-ttl" placeholder="default: 60s">
+        <label for="node-input-evtnametopic" style="vertical-align:top;"><i class="fa fa-angle-double-right"></i></label>
+        <input type="checkbox" id="node-input-evtnametopic" style="display: inline-block; width: auto; vertical-align: top;">
+        <label for="node-input-evtnametopic" style="width:70%;">Send Event Name, Data as msg.topic/msg.payload?</label>
     </div>
     <br/>
     <div class="form-row">
-        <label>&nbsp;</label>
-        <input type="checkbox" id="node-input-once" style="display: inline-block; width: auto; vertical-align: top;">
-        <label for="node-input-once" style="width: 70%;">Publish Event on start?</label>
+        <label for="node-input-ttl"><i class="fa fa-hourglass-half"></i> TTL (sec)</label>
+        <input type="number" id="node-input-ttl" style="width: 10%;" placeholder="60">
+        <span style="color:#ccc"> (topic:ttl)</span>
     </div>
-    <br/>
-  	<div class="form-row">
+    <div class="form-row">
         <label for="node-input-repeat"><i class="fa fa-repeat"></i> Repeat (sec)</label>
-        <input type="text" id="node-input-repeat" placeholder="topic:repeat; 0 = no repeat">
+        <input type="number" id="node-input-repeat" style="width: 10%;">
+        <span style="color:#ccc"> (topic:repeat; 0 = no repeat)</span>
+    </div>
+    <div class="form-row">
+        <label for="node-input-once"><i class="fa fa-play"></i></label>
+        <input type="checkbox" id="node-input-once" style="display: inline-block; width: auto; vertical-align: top;">
+        <label for="node-input-once" style="width:70%;">Publish Event on start?</label>
     </div>
     <br/>
-    <div class="form-row">
-        <label for="node-input-consolelog"><i class="fa fa-bug"></i> Verbose logging?</label>
-        <input type="checkbox" id="node-input-consolelog">
+    <div class="form-tips">
+        Please note breaking changes after v0.1.2 - refer to Information sidebar and <a href="https://github.com/chuank/node-red-contrib-particle" target="_blank">Github page</a> for full details.
     </div>
 </script>
 <!-- Help content -->
-<script type="text/x-red" data-help-name="ParticlePublish out">
-  <p>Lets you publish events to a Particle cloud (official or local).</p>
-  <h3>Inputs</h3>
-      <dl class="message-properties">
-          <dt class="optional">topic <span class="property-type">string</span></dt>
-          <dd> set topic to <code>evtname</code>.</dd>
-          <dt class="required">payload <span class="property-type">string</span></dt>
-          <dd> depending on <code>topic</code>, <code>payload</code> will set new Event name for the node or publish Particle Event using <code>payload</code> as the data (see below for details).</dd>
+<script type="text/x-red" data-help-name="particle-pub">
+    <p>Lets you publish events to a Particle cloud (official or local).</p>
+    <h3>Inputs</h3>
+        <dl class="message-properties">
+            <dt class="optional">topic <span class="property-type">string</span></dt>
+            <dd> set topic to <code>evtname</code>, <code>param</code>, <code>ttl</code> or <code>repeat</code>.</dd>
+            <dt class="required">payload <span class="property-type">string</span></dt>
+            <dd> depending on <code>topic</code>, <code>payload</code> will set new Event name, Data, Product, private flag, TTL, or repeat options for the node.
+            Alternatively, send any <code>payload</code> without a <code>topic</code> to publish the node's event as-is (see below for details).</dd>
+        </dl>
+    <h3>Outputs</h3>
+        <dl class="message-properties">
+          <dt>payload <span class="property-type">boolean / JSON</span></dt>
+          <dd>the Particle Cloud will respond with a msg.payload of <code>true</code> if Event is successfully published. It will otherwise log and display a nodeRED Error with details.</dd>
       </dl>
-  <h3>Outputs</h3>
-      <dl class="message-properties">
-          <dt>raw <span class="property-type">JSON</span></dt>
-          <dd>the Particle Cloud will respond with either <code>true</code> or <code>false</code> after the Event is published.</dd>
-      </dl>
-  <h3>Details</h3>
-      <h4>Node Properties</h4>
-      <code>Cloud URL</code></br>
-      <p>Add or choose an existing Particle cloud configuration.</p>
-      <code>Event</code></br>
-      <p>Enter the Particle Event name you want to publish. 'spark' is reserved by the Particle Cloud and cannot be used.</p>
-      <code>Use topic as Event Name?</code></br>
-      <p>When enabled, <code>topic</code> will be used as the event name, as long as it is not blank and not "evtname", "repeat" or "param".</p>
-      <code>Event Data</code></br>
-      <p>Sets a data string to send along with the published Event (maximum 63 characters).</p>
-      <code>Private?</code></br>
-      <p>Sets the public/private status of the published Event.</p>
-      <code>TTL</code></br>
-      <p>How long the published Event should persist in the Particle Cloud.</p>
-      <code>Publish Event on start?</code></br>
-      <p>If checked, the Event will be published immediately after the node loads (i.e. on Node-RED startup).</p>
-      <code>Repeat (sec)</code><br/>
-      <p>If a repeat interval is desired, enter a value (in seconds). 0 = no repeat.</p>
-      <code>Verbose logging?</code></br>
-      <p>When enabled, log everything to Node-RED logs (warning: while good for testing, this can quickly overflow your log file).</p>
-      <p>&nbsp;</p>
-      <h4>Notes</h4>
-      <p>Upstream messages with the appropriate <code>topic</code> allow for dynamic modification of the node&apos;s properties. Properties defined in each node&apos;s edit box remain and are restored when the flows are re-deployed. The labels on the nodes will also not change to reflect any new properties, but a green status ring and message will be shown next to nodes that have their properties dynamically modified by up-stream messages.</p>
-      <p>If <strong>Use topic as Event Name</strong> is enabled, send a <code>msg</code> containing the event name as <code>topic</code> and data as <code>payload</code>.</p>
-      <p>You can also set <code>msg.topic</code> to <code>evtname</code>, <code>param</code> or <code>repeat</code> to modify the Event name, data or the repeat interval respectively.</p>
-      <p>If the Event name is blank (either in the configuration of the node or updated dynamically), "NodeRED" will be used as the Event name.</p>
-      <p>Properties defined in each node&apos;s edit box remain and are restored when the flows are re-deployed. The labels on the nodes will also not change to reflect any new properties, but a green status ring and message will be shown next to nodes that have their properties dynamically modified by up-stream messages.</p>
-  <h3>References</h3>
-      <ul>
-          <li><a href="https://docs.particle.io/reference/api/#publish-an-event" target="_blank">Particle Docs: Publish an event</a></li>
-          <li><a href="https://github.com/chuank/node-red-contrib-particle" target="_blank">GitHub</a> - the node&apos;s github repository</li>
-      </ul>
+    <h3>Details</h3>
+        <h4>Node Properties</h4>
+        <code>Cloud</code></br>
+        <p>Add or choose an existing Particle cloud configuration.</p>
+        <code>Event</code></br>
+        <p>Enter the Particle Event name you want to publish. 'spark' is reserved by the Particle Cloud and cannot be used.</p>
+        <code>Data</code></br>
+        <p>Sets a data string to send along with the published Event (maximum 63 characters).</p>
+        <code>Product ID</code></br>
+        <p>Add a Product ID or slug to publish event(s) meant only for the specified Product.</p>
+        <code>Publish as a private event?</code></br>
+        <p>Sets the public/private status of the published Event.</p>
+        <code>Send Event Name, Data as msg.topic/msg.payload?</code></br>
+        <p>When enabled, <code>msg.topic</code> will be used as the event name, as long as it is not blank and not "evtname", "param", "prodIdOrSlug", "private", "ttl" or "repeat". <code>msg.payload</code> gets passed on as the event parameter.</p>
+        <code>TTL</code></br>
+        <p>How long the published Event should persist in the Particle Cloud (in seconds).</p>
+        <code>Publish Event on start?</code></br>
+        <p>If checked, the Event will be published immediately after the node loads (i.e. on Node-RED startup).</p>
+        <code>Repeat (sec)</code><br/>
+        <p>If a repeat interval is desired, enter a value (in seconds). 0 = no repeat.</p>
+        <p>&nbsp;</p>
+        <h4>Notes</h4>
+        <p>Sending input messages allows dynamic modification of the node&apos;s properties. Properties defined in each node&apos;s edit box remain and are restored when the flows are re-deployed. The labels on the nodes will also not change to reflect any new properties, but a green status ring and message will be shown next to nodes that have their properties dynamically modified by up-stream messages.</p>
+        <p>If <strong>Send Event Name, Data as msg.topic/msg.payload?</strong> is enabled, send a <code>msg</code> containing the event name as <code>topic</code> and data as <code>payload</code>.</p>
+        <p>You can also set <code>msg.topic</code> to <code>evtname</code>, <code>param</code>, <code>prodIdOrSlug</code>, <code>private</code>, <code>ttl</code> or <code>repeat</code> to modify the Event name, data, Product, private flag, TTL or the repeat interval respectively.</p>
+        <p>If the Event name is blank (either in the node configuration, or updated dynamically), "NodeRED" will be passed as the Event name to identify the event as one that isn&apos;t originating from a Particle Device.</p>
+        <p>When any incoming upstream messages change the node&apos;s properties, the node will immediately reconnect, signalling that the node&apos;s original properties as specified in the node properties have been temporarily overwritten. The appearance of the node will NOT change.</p>
+    <h3>References</h3>
+        <ul>
+            <li><a href="https://docs.particle.io/reference/api/#publish-an-event" target="_blank">Particle Docs: Publish an event</a></li>
+            <li><a href="https://github.com/chuank/node-red-contrib-particle" target="_blank">GitHub</a> - the node&apos;s github repository</li>
+        </ul>
 </script>
 <!-- code -->
 <script type="text/javascript">
-  RED.nodes.registerType("ParticlePublish out", {
-  	category: "Particle",
-  	defaults: {
-  		pcloud:      {value:"", type:"particle-cloud"},
-  		evtname:      {value:""},
-  		evtnametopic: {value:false},
-  		param:        {value:"", validate:function(v) { return v.length < 64; } },
-  		private:      {value:false},
-  		ttl:          {value:60, required: false, validate:function(v) { return (v >= 0 && v < 16777216); } },
-      once:         {value:false},
-  		repeat:       {value:0, validate:function(v) { return v >= 0; } },
-  		consolelog:   {value:false}
-  	},
-  	color:"#00ACED",
-  	inputs:1,
-  	outputs:1,
-  	icon: "particle.png",
-	align: "right",
-  	label: function() {
-  		if (this.evtname === undefined || this.evtname === "") {    // node has not been set with event name
-  			return "ParticlePublish";
-  		} else {
-  			return "ParticlePublish (" + this.evtname + ")";
-  		}
-  	},
-  	labelStyle: function() {
-  		return this.evtname ? "":"node_label_italic";
-  	},
-	  oneditprepare: function() {
-  	},
-	  oneditsave: function() {
-  	},
-  	ondelete: function() {
-  	}
-  });
+    RED.nodes.registerType("particle-pub", {
+        category: "Particle",
+        defaults: {
+            pcloud: { value: "", type: "particle-cloud" },
+            evtname: { value: "", validate: function (v) { return v != "spark"; } },
+            param: { value: "", validate: function (v) { return v.length < 64; } },
+            productIdOrSlug: { value: "" },
+            private: { value: false },
+            evtnametopic: { value: false },
+            ttl: { value: 60, required: false, validate: function (v) { return (v >= 0 && v < 16777216); } },
+            repeat: { value: 0, validate: function (v) { return v >= 0; } },
+            once: { value: false }
+        },
+        color: "#00ACED",
+        inputs: 1,
+        outputs: 1,
+        icon: "particle.png",
+        align: "right",
+        paletteLabel: "publish",
+        label: function () {
+            let la = "pub";
+            if (this.productIdOrSlug) la += " (prod " + this.productIdOrSlug + ")";
+            if (this.evtname) la += " : " + this.evtname;
+            return la;
+        },
+        labelStyle: function () {
+            return this.evtname ? "" : "node_label_italic";
+        }
+    });
 </script>
 <!-- end Publish node -->
 
 <!-- Particle Function call node -->
 <!-- Edit Dialog -->
-<script type="text/x-red" data-template-name="ParticleFunc out">
-	<div class="form-row">
-        <label for="node-input-pcloud"><i class="fa fa-cloud"></i> Cloud URL</label>
+<script type="text/x-red" data-template-name="particle-func">
+    <div class="form-row">
+        <label for="node-input-pcloud"><i class="fa fa-cloud"></i> Cloud</label>
         <input type="text" id="node-input-pcloud">
-  </div>
-  <div class="form-row">
+    </div>
+    <hr/>
+    <div class="form-row">
         <label for="node-input-devid"><i class="fa fa-bullseye"></i> Device ID/Name</label>
-        <input type="text" id="node-input-devid" placeholder="topic:devid">
-  </div>
-	<br/>
+        <input type="text" id="node-input-devid" style="vertical-align:top;" placeholder="topic:devid">
+    </div>
 	<div class="form-row">
-        <label for="node-input-fname"><i class="icon-tag"></i> Cloud Function</label>
-        <input type="text" id="node-input-fname" placeholder="topic:fname">
-  </div>
+        <label for="node-input-fname"><i class="fa fa-code"></i> Cloud Function</label>
+        <input type="text" id="node-input-fname" style="vertical-align:top;" placeholder="topic:fname">
+    </div>
 	<div class="form-row">
-        <label for="node-input-param"><i class="icon-tag"></i> Parameter</label>
+        <label for="node-input-param"><i class="fa fa-tasks"></i> Parameter</label>
         <input type="text" id="node-input-param" placeholder="topic:param">
-  </div>
-	<br/>
-  <div class="form-row">
-      <label>&nbsp;</label>
-      <input type="checkbox" id="node-input-once" style="display: inline-block; width: auto; vertical-align: top;">
-      <label for="node-input-once" style="width: 70%;">Call Function on start?</label>
-  </div>
-  <br/>
+    </div>
+    <div class="form-row">
+        <label for="node-input-productIdOrSlug"><i class="fa fa-cubes"></i> Product ID</label>
+        <input type="text" id="node-input-productIdOrSlug" placeholder="optional; topic:productIdOrSlug">
+    </div>    
+    <br/>
 	<div class="form-row">
         <label for="node-input-repeat"><i class="fa fa-repeat"></i> Repeat (sec)</label>
-        <input type="text" id="node-input-repeat" placeholder="topic:repeat; 0 = no repeat">
-  </div>
-  <br/>
-  <div class="form-row">
-      <label for="node-input-consolelog"><i class="fa fa-bug"></i> Verbose logging?</label>
-      <input type="checkbox" id="node-input-consolelog">
-  </div>
+        <input type="number" id="node-input-repeat" style="width:10%;">
+        <span style="color:#ccc"> (topic:repeat; 0 = no repeat)</span>
+    </div>
+    <div class="form-row">
+        <label for="node-input-once"><i class="fa fa-play"></i></label>
+        <input type="checkbox" id="node-input-once" style="display: inline-block; width: auto; vertical-align: top;">
+        <label for="node-input-once" style="width: 70%;">Call Function on start?</label>
+    </div>
+    <br/>
+    <div class="form-tips">
+        If Product ID / slug is used, you must provide the 24-character Device ID instead of the Device Name.
+        <br/><br/>
+        Please note breaking changes after v0.1.2 - refer to Information sidebar and <a href="https://github.com/chuank/node-red-contrib-particle" target="_blank">Github page</a> for full details.
+    </div>
 </script>
 <!-- Help content -->
-<script type="text/x-red" data-help-name="ParticleFunc out">
-  <p>Allows you to call a cloud Function registered to a specific Particle Device on a Particle cloud.</p>
-  <h3>Inputs</h3>
-      <dl class="message-properties">
-          <dt class="optional">topic <span class="property-type">string</span></dt>
-          <dd> set topic to either <code>devid</code>, <code>fname</code>, <code>param</code> or <code>repeat</code>. Changing <code>devid</code> or <code>fname</code> will NOT trigger the Function, only <code>param</code> will. Also, changing <code>repeat</code> will cause the Function to trigger at the next new interval.</dd>
-          <dt class="optional">payload <span class="property-type">string</span></dt>
-          <dd> depending on <code>topic</code>, <code>payload</code> will set new Device ID / Function name / parameter(s) for the node.<br />
-          'shortcut': send just <code>msg.payload</code> without <code>msg.topic</code> to intepret the payload as a parameter string.</dd>
-      </dl>
-  <h3>Outputs</h3>
-      <dl class="message-properties">
-          <dt>raw <span class="property-type">JSON</span></dt>
-          <dd>raw output of the Function.</dd>
-          <dt>payload <span class="property-type">string</span></dt>
-          <dd>returned data from the Function (if any).</dd>
-          <dt>id <span class="property-type">string</span></dt>
-          <dd>device ID.</dd>
-          <dt>published_at <span class="property-type">date</span></dt>
-          <dd>published date and time of Function call.</dd>
-      </dl>
-  <h3>Details</h3>
-      <h4>Node Properties</h4>
-      <code>Cloud URL</code></br>
-      <p>Add or choose an existing Particle cloud configuration.</p>
-      <code>Device ID/Name</code></br>
-      <p>Enter a Device ID or Name of the target Particle Device where the cloud Function originates from.</p>
-      <code>Cloud Function</code></br>
-      <p>Enter the name of the Particle cloud Function.</p>
-      <code>Parameter</code></br>
-      <p>Provide a (maximum) 63-byte string as parameter as required by your cloud Function.</p>
-      <code>Call Function on start?</code></br>
-      <p>If checked, the Function call will initiate immediately after the node loads (i.e. on Node-RED startup).</p>
-      <code>Repeat (sec)</code></br>
-      <p>If a repeat interval is desired, enter a value (in seconds); 0 = no repeat.</p>
-      <code>Verbose logging?</code></br>
-      <p>When turned on, events will be logged to Node-RED logs (warning: this can quickly overflow your log file).</p>
-      <p>&nbsp;</p>
-      <h4>Notes</h4>
-      <p>Sending input messages allows dynamic modification of the node&apos;s properties. Properties defined in each node&apos;s edit box remain and are restored when the flows are re-deployed. The labels on the nodes will also not change to reflect any new properties, but a green status ring and message will be shown next to nodes that have their properties dynamically modified by up-stream messages.</p>
-      <p>When either <code>msg.evtname</code> or <code>msg.devid</code> is changed, the node will immediately reconnect and its status will change from a solid green dot to a green ring, signalling that the node&apos;s original properties as specified in the node properties have been temporarily overwritten.</p>
-  <h3>References</h3>
-      <ul>
-          <li><a href="https://docs.particle.io/" target="_blank">Particle Docs</a></li>
-          <li><a href="https://github.com/chuank/node-red-contrib-particle" target="_blank">GitHub</a> - the node&apos;s github repository</li>
-      </ul>
+<script type="text/x-red" data-help-name="particle-func">
+    <p>Allows you to call a cloud Function registered to a specific Particle Device on a Particle cloud.</p>
+    <h3>Inputs</h3>
+        <dl class="message-properties">
+        <dt class="optional">topic <span class="property-type">string</span></dt>
+        <dd> set topic to <code>devid</code>, <code>fname</code>, <code>param</code>, <code>prodIdOrSlug</code> or <code>repeat</code>. Changing <code>devid</code>, <code>prodIdOrSlug</code> or <code>fname</code> will NOT trigger the Function, only <code>param</code> will. Also, changing <code>repeat</code> will cause the Function to trigger at the next new interval.</dd>
+        <dt class="optional">payload <span class="property-type">string</span></dt>
+        <dd> depending on <code>topic</code>, <code>payload</code> will set new Device ID / Function name / parameter(s) / Product for the node.
+        <br/><br/>
+        'shortcut': send just <code>msg.payload</code> without <code>msg.topic</code> to intepret the payload as a parameter string.</dd>
+        </dl>
+    <h3>Outputs</h3>
+        <dl class="message-properties">
+            <dt>raw <span class="property-type">JSON</span></dt>
+            <dd>raw output of the Function.</dd>
+            <dt>payload <span class="property-type">string</span></dt>
+            <dd>returned data from the Function (if any).</dd>
+            <dt>id <span class="property-type">string</span></dt>
+            <dd>device ID.</dd>
+        </dl>
+    <h3>Details</h3>
+        <h4>Node Properties</h4>
+        <code>Cloud</code></br>
+        <p>Add or choose an existing Particle cloud configuration.</p>
+        <code>Device ID/Name</code></br>
+        <p>Enter a Device ID or Name of the target Particle Device where the cloud Function originates from.</p>
+        <code>Cloud Function</code></br>
+        <p>Enter the name of the Particle cloud Function.</p>
+        <code>Parameter</code></br>
+        <p>Provide a (maximum) 63-byte string as parameter as required by your cloud Function.</p>
+        <code>Product ID</code></br>
+        <p>Add a Product ID or slug to call function(s) meant only for the specified Product.</p>
+        <code>Call Function on start?</code></br>
+        <p>If checked, the Function call will initiate immediately after the node loads (i.e. on Node-RED startup).</p>
+        <code>Repeat (sec)</code></br>
+        <p>If a repeat interval is desired, enter a value (in seconds); 0 = no repeat.</p>
+        <p>&nbsp;</p>
+        <h4>Notes</h4>
+        <p>Sending input messages allows dynamic modification of the node&apos;s properties. Properties defined in each node&apos;s edit box remain and are restored when the flows are re-deployed. The labels on the nodes will also not change to reflect any new properties, but a green status ring and message will be shown next to nodes that have their properties dynamically modified by up-stream messages.</p>
+        <p>When any incoming upstream messages change the node&apos;s properties, the appearance of the node will NOT change.</p>
+    <h3>References</h3>
+        <ul>
+            <li><a href="https://docs.particle.io/" target="_blank">Particle Docs</a></li>
+            <li><a href="https://github.com/chuank/node-red-contrib-particle" target="_blank">GitHub</a> - the node&apos;s github repository</li>
+        </ul>
 </script>
 <!-- code -->
 <script type="text/javascript">
-  RED.nodes.registerType("ParticleFunc out",{
-  	category: "Particle",
-  	defaults: {
-  		pcloud:     {value:"", type:"particle-cloud"},
-  		devid:      {value:"", required:true},
-  		fname:      {value:"", required:true, validate:function(v) { return v.length < 13; } },
-  		param:      {value:""},
-  		once:       {value:false},
-  		repeat:     {value:0, validate:function(v) { return v >= 0; } },
-  		consolelog: {value:false}
-  	},
-  	color:"#00ACED",
-  	inputs:1,
-  	outputs:1,
-  	icon: "particle.png",
-  	align: "right",
-  	label: function() {
-  		if (this.fname === undefined || this.fname === "" || this.devid === undefined || this.devid === "") {    // node has not been set with required data
-  			return "ParticleFunc";
-  		} else {
-  			return "func (" + this.devid + "): " + this.fname;
-  		}
-  	},
-  	labelStyle: function() {
-  		return this.fname ? "":"node_label_italic";
-  	},
-  	oneditprepare: function() {
-  	},
-  	oneditsave: function() {
-  	},
-  	ondelete: function() {
-  	}
-  });
+    RED.nodes.registerType("particle-func", {
+        category: "Particle",
+        defaults: {
+            pcloud: { value: "", type: "particle-cloud" },
+            devid: { value: "", required: true },
+            fname: { value: "", required: true, validate: function (v) { return v.length < 13; } },
+            param: { value: "" },
+            productIdOrSlug: { value: "" },
+            repeat: { value: 0, validate: function (v) { return v >= 0; } },
+            once: { value: false }
+        },
+        color: "#00ACED",
+        inputs: 1,
+        outputs: 1,
+        icon: "particle.png",
+        align: "right",
+        paletteLabel: "function",
+        label: function () {
+            let la = "func";
+            if (this.productIdOrSlug) la += " (prod " + this.productIdOrSlug + ")";
+            if (this.devid) la += " " + this.devid;
+            if (this.fname) la += " : " + this.fname;
+            return la;
+        },
+        labelStyle: function () {
+            return this.fname ? "" : "node_label_italic";
+        }
+    });
 </script>
 <!-- end Particle Function call node -->
 
 
 <!-- Particle variable node -->
 <!-- Edit Dialog -->
-<script type="text/x-red" data-template-name="ParticleVar">
+<script type="text/x-red" data-template-name="particle-var">
 	<div class="form-row">
-        <label for="node-input-pcloud"><i class="fa fa-cloud"></i> Cloud URL</label>
+        <label for="node-input-pcloud"><i class="fa fa-cloud"></i> Cloud</label>
         <input type="text" id="node-input-pcloud">
-  </div>
-  <div class="form-row">
+    </div>
+    <hr/>
+    <div class="form-row">
         <label for="node-input-devid"><i class="fa fa-bullseye"></i> Device ID/Name</label>
-        <input type="text" id="node-input-devid" placeholder="topic:devid">
-  </div>
-	<br/>
+        <input type="text" id="node-input-devid" style="vertical-align:top;" placeholder="topic:devid">
+    </div>
 	<div class="form-row">
         <label for="node-input-getvar"><i class="icon-tag"></i> Device Variable Name</label>
-        <input type="text" id="node-input-getvar" placeholder="topic:getvar">
-  </div>
-	<br/>
-  <div class="form-row">
-      <label>&nbsp;</label>
-      <input type="checkbox" id="node-input-once" style="display: inline-block; width: auto; vertical-align: top;">
-      <label for="node-input-once" style="width: 70%;">Retrieve variable on start?</label>
-  </div>
+        <input type="text" id="node-input-getvar" style="vertical-align:top;" placeholder="topic:getvar">
+    </div>
+    <div class="form-row">
+        <label for="node-input-productIdOrSlug"><i class="fa fa-cubes"></i> Product ID</label>
+        <input type="text" id="node-input-productIdOrSlug" placeholder="optional; topic:productIdOrSlug">
+    </div>
+    <br/>
 	<div class="form-row">
         <label for="node-input-repeat"><i class="fa fa-repeat"></i> Repeat (sec)</label>
-        <input type="text" id="node-input-repeat" placeholder="topic:repeat; 0 = no repeat">
-  </div>
-  <br/>
-  <div class="form-row">
-      <label for="node-input-consolelog"><i class="fa fa-bug"></i> Verbose logging?</label>
-      <input type="checkbox" id="node-input-consolelog">
-  </div>
+        <input type="number" id="node-input-repeat" style="width:10%;">
+        <span style="color:#ccc"> (topic:repeat; 0 = no repeat)</span>
+    </div>
+    <div class="form-row">
+        <label for="node-input-once"><i class="fa fa-play"></i></label>
+        <input type="checkbox" id="node-input-once" style="display: inline-block; width: auto; vertical-align: top;">
+        <label for="node-input-once" style="width: 70%;">Retrieve variable on start?</label>
+    </div>
+    <br/>
+    <div class="form-tips">
+        If Product ID / slug is used, you must provide the 24-character Device ID instead of the Device Name.
+        <br/><br/>    
+        Please note breaking changes after v0.1.2 - refer to Information sidebar and <a href="https://github.com/chuank/node-red-contrib-particle" target="_blank">Github page</a> for full details.
+    </div> 
 </script>
 <!-- Help content -->
 
-<script type="text/x-red" data-help-name="ParticleVar">
-  <p>Allows you to retrieve a variable registered to a Particle cloud by a specific Particle Device.</p>
-  <h3>Inputs</h3>
-      <dl class="message-properties">
-          <dt class="optional">topic <span class="property-type">string</span></dt>
-          <dd> set topic to either <code>devid</code> or <code>getvar</code>.</dd>
-          <dt class="optional">payload <span class="property-type">string</span></dt>
-          <dd> depending on <code>topic</code>, <code>payload</code> will set new Device ID / Variable name for the node.</dd>
-      </dl>
-  <h3>Outputs</h3>
-      <dl class="message-properties">
-          <dt>raw <span class="property-type">JSON</span></dt>
-          <dd>raw output of the result.</dd>
-          <dt>payload <span class="property-type">string</span></dt>
-          <dd>returned data from the variable.</dd>
-          <dt>id <span class="property-type">string</span></dt>
-          <dd>device ID.</dd>
-          <dt>published_at <span class="property-type">date</span></dt>
-          <dd>published date and time of request.</dd>
-      </dl>
-  <h3>Details</h3>
-      <h4>Node Properties</h4>
-      <code>Cloud URL</code><br/>
-      <p>Add or choose an existing Particle cloud configuration.</p>
-      <code>Device ID/Name</code><br/>
-      <p>Enter a Device ID or Name of the target Particle Device where the variable can be retrieved.</p>
-      <code>Device Variable Name</code><br/>
-      <p>Enter the name of the Particle variable.</p>
-      <code>Retrieve variable on start?</code><br/>
-      <p>If checked, the variable retreival will initiate immediately after the node loads (i.e. on Node-RED startup).</p>
-      <code>Repeat (sec)</code><br/>
-      <p>If a repeat interval is desired, enter a value (in seconds); 0 = no repeat.</p>
-      <code>Verbose logging?</code><br/>
-      <p>When turned on, events will be logged to Node-RED logs (warning: this can quickly overflow your log file).</p>
-      <p>&nbsp;</p>
-      <h4>Notes</h4>
-      <p>Sending input messages allows dynamic modification of the node&apos;s properties. Properties defined in each node&apos;s edit box remain and are restored when the flows are re-deployed. The labels on the nodes will also not change to reflect any new properties, but a green status ring and message will be shown next to nodes that have their properties dynamically modified by up-stream messages.</p>
-      <p>When either <code>msg.evtname</code> or <code>msg.devid</code> is changed, the node will immediately reconnect and its status will change from a solid green dot to a green ring, signalling that the node&apos;s original properties as specified in the node properties have been temporarily overwritten.</p>
-  <h3>References</h3>
-      <ul>
-          <li><a href="https://docs.particle.io/" target="_blank">Particle Docs</a></li>
-          <li><a href="https://github.com/chuank/node-red-contrib-particle" target="_blank">GitHub</a> - the node&apos;s github repository</li>
-      </ul>
+<script type="text/x-red" data-help-name="particle-var">
+    <p>Allows you to retrieve a variable registered to a Particle cloud by a specific Particle Device.</p>
+    <h3>Inputs</h3>
+        <dl class="message-properties">
+            <dt class="optional">topic <span class="property-type">string</span></dt>
+            <dd> set topic to <code>devid</code>, <code>getvar</code>, <code>prodIdOrSlug</code> or <code>repeat</code>.</dd>
+            <dt class="optional">payload <span class="property-type">string</span></dt>
+            <dd> depending on <code>topic</code>, <code>payload</code> will set new Device ID / Variable name / Product / repeat interval for the node.</dd>
+        </dl>
+    <h3>Outputs</h3>
+        <dl class="message-properties">
+            <dt>raw <span class="property-type">JSON</span></dt>
+            <dd>raw output of the result.</dd>
+            <dt>payload <span class="property-type">string</span></dt>
+            <dd>returned data from the variable.</dd>
+            <dt>id <span class="property-type">string</span></dt>
+            <dd>device ID.</dd>
+        </dl>
+    <h3>Details</h3>
+        <h4>Node Properties</h4>
+        <code>Cloud</code><br/>
+        <p>Add or choose an existing Particle cloud configuration.</p>
+        <code>Device ID/Name</code><br/>
+        <p>Enter a Device ID or Name of the target Particle Device where the variable can be retrieved.</p>
+        <code>Device Variable Name</code><br/>
+        <p>Enter the name of the Particle variable.</p>
+        <code>Product ID</code></br>
+        <p>Add a Product ID or slug to call function(s) meant only for the specified Product.</p>
+        <code>Repeat (sec)</code><br/>
+        <p>If a repeat interval is desired, enter a value (in seconds); 0 = no repeat.</p>
+        <code>Retrieve variable on start?</code><br/>
+        <p>If checked, the variable retreival will initiate immediately after the node loads (i.e. on Node-RED startup).</p>
+        <code>Verbose logging?</code><br/>
+        <h4>Notes</h4>
+        <p>Sending input messages allows dynamic modification of the node&apos;s properties. Properties defined in each node&apos;s edit box remain and are restored when the flows are re-deployed. The labels on the nodes will also not change to reflect any new properties, but a green status ring and message will be shown next to nodes that have their properties dynamically modified by up-stream messages.</p>
+        <p>When any incoming upstream messages change the node&apos;s properties, the appearance of the node will NOT change.</p>
+    <h3>References</h3>
+        <ul>
+            <li><a href="https://docs.particle.io/" target="_blank">Particle Docs</a></li>
+            <li><a href="https://github.com/chuank/node-red-contrib-particle" target="_blank">GitHub</a> - the node&apos;s github repository</li>
+        </ul>
 </script>
 <!-- code -->
 <script type="text/javascript">
-    RED.nodes.registerType("ParticleVar",{
-    	category: "Particle",
-    	defaults: {
-    		pcloud: {value:"", type:"particle-cloud"},
-    		devid: {value:"", required:true},
-    		getvar: {value:"", required:true, validate:function(v) { return v.length < 13; } },
-    		once: {value:false},
-    		repeat: {value:0, validate:function(v) { return v >= 0; } },
-    		consolelog: {value:false}
-    	},
-    	color:"#00ACED",
-    	inputs:1,
-    	outputs:1,
-    	icon: "particle.png",
-    	label: function() {
-    		if (this.getvar === undefined || this.getvar === "" || this.devid === undefined || this.devid === "") {    // node has not been set with required data
-    			return "ParticleVar";
-    		} else {
-    			return "var (" + this.devid + "): " + this.getvar;
-    		}
-    	},
-    	labelStyle: function() {
-    		return this.getvar ? "":"node_label_italic";
-    	},
-    	oneditprepare: function() {
-    	},
-    	oneditsave: function() {
-    	},
-    	ondelete: function() {
-    	}
+    RED.nodes.registerType("particle-var", {
+        category: "Particle",
+        defaults: {
+            pcloud: { value: "", type: "particle-cloud" },
+            devid: { value: "", required: true },
+            getvar: { value: "", required: true, validate: function (v) { return v.length < 13; } },
+            productIdOrSlug: { value: "" },
+            repeat: { value: 0, validate: function (v) { return v >= 0; } },
+            once: { value: false }
+        },
+        color: "#00ACED",
+        inputs: 1,
+        outputs: 1,
+        icon: "particle.png",
+        paletteLabel: "variable",
+        label: function () {
+            let la = "var";
+            if (this.productIdOrSlug) la += " (prod " + this.productIdOrSlug + ")";
+            if (this.devid) la += " " + this.devid;
+            if (this.getvar) la += " : " + this.getvar;
+            return la;
+        },
+        labelStyle: function () {
+            return this.getvar ? "" : "node_label_italic";
+        }
     });
 </script>
 <!-- end Particle variable node -->
