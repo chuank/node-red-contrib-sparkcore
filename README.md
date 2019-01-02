@@ -11,7 +11,7 @@ Install
 
 Upgrading
 ---------
-IMPORTANT: v0.2.0 introduces a few major breaking changes as it now adopts the [Particle JS API](https://github.com/particle-iot/particle-api-js). The codebase has been updated to be in line with the latest Node-RED recommendations. The node names have also been changed for styling consistency with other nodes.
+IMPORTANT: v1.0.0 introduces a few major breaking changes as it now adopts the [Particle JS API](https://github.com/particle-iot/particle-api-js). The codebase has been updated to be in line with the latest Node-RED recommendations. The node names have also been changed for styling consistency with other nodes.
 
 The Manage Palette UI should upgrade dependencies without issue, so long as you restart your Node-RED server after. What you will encounter after the upgrade is 'missing' nodes due to the renaming of the Particle node names – please set up your Particle nodes again. Sorry.
 
