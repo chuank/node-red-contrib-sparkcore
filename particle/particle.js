@@ -306,11 +306,9 @@ module.exports = function (RED) {
 				options.name = that.evtname;
 			}
 
-			let dps = encodeURIComponent(that.devprodslug);
-
 			switch (that.subscribetype) {
 				case "devid":
-					options.deviceId = dps;
+					options.deviceId = that.devprodslug;
 					break;
 				case "mine":
 					options.deviceId = "mine";
@@ -318,10 +316,10 @@ module.exports = function (RED) {
 				case "all":
 					break;
 				case "productIdOrSlug":
-					options.product = dps;
+					options.product = that.devprodslug;
 					break;
 				case "orgSlug":
-					options.org = dps;
+					options.org = that.devprodslug;
 					break;
 			}
 
