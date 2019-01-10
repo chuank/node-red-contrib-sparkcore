@@ -830,7 +830,7 @@ module.exports = function (RED) {
 
 		if (this.once) { // run on init, if requested
 			setTimeout(function () {
-				this.emit("processVar", {});
+				that.emit("processVar", {});
 			}, this.timeoutDelay);
 		}
 
