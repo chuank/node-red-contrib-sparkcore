@@ -79,7 +79,12 @@
         <input type="text" id="node-input-productIdOrSlug" placeholder="optional; topic:productIdOrSlug">
     </div>    
     <br/>
-    <div class="form-tips">
+    <div class="form-tips particle-utilitylist-tip" id="particle-utilitylist-tip">
+        Setting a new <code>devid</code> or <code>prodIdOrSlug</code> via an upstream topic:payload message does NOT change the text label of the node. The label will always retain the settings as defined when deployed.
+        <br/><br/>
+        Please note breaking changes after v0.1.2 - refer to Information sidebar and <a href="https://github.com/chuank/node-red-contrib-particle" target="_blank">Github page</a> for full details.
+    </div>
+    <div class="form-tips particle-utilitydevice-tip hidden" id="particle-utilitydevice-tip">
         If Product ID / slug is used, you must provide the 24-character Device ID instead of the Device Name. 
         <br/><br/>
         Setting a new <code>devid</code> or <code>prodIdOrSlug</code> via an upstream topic:payload message does NOT change the text label of the node. The label will always retain the settings as defined when deployed.
@@ -134,7 +139,7 @@
         color: "#00ACED",
         defaults: {
             pcloud: { value: "", type: "particle-cloud" },
-            utilitytype: { value: "" },
+            utilitytype: { value: "listDevices" },
             devid: { value: "", required: true },
             productIdOrSlug: { value: "" }
         },
@@ -185,10 +190,14 @@
 
                 switch (id) {
                     case "listDevices":
+                        $("#particle-utilitylist-tip").show();
+                        $("#particle-utilitydevice-tip").hide();
                         $("#particle-utilitydevice-row").hide();
                         break;
                     case "getDevice":
                     case "signalDevice":
+                        $("#particle-utilitylist-tip").hide();
+                        $("#particle-utilitydevice-tip").show();
                         $("#particle-utilitydevice-row").show();
                         break;
                 }
@@ -308,6 +317,7 @@
     <h3>References</h3>
         <ul>
             <li><a href="https://docs.particle.io/" target="_blank">Particle Docs</a></li>
+            <li><a href="https://docs.particle.io/reference/device-os/firmware/photon/#cloud-functions" target="_blank">API field limits</a></li>
             <li><a href="https://github.com/chuank/node-red-contrib-particle" target="_blank">GitHub</a> - the node&apos;s github repository</li>
         </ul>
 </script>
@@ -321,7 +331,7 @@
             subscribetype: { value: "devid" },
             devprodslug: { value: "", required: true },
             devid: { value: "" },
-            evtname: { value: "" },
+            evtname: { value: "", validate: function (v) { return v.length < 65; } },
             strict: { value: 0 }
         },
         icon: "particle.png",
@@ -475,7 +485,7 @@
     </div>
     <div class="form-row">
         <label for="node-input-param"><i class="fa fa-tasks"></i> Data</label>
-        <input type="text" id="node-input-param" placeholder="optional, maximum 63 characters; topic:param">
+        <input type="text" id="node-input-param" placeholder="optional, maximum 622 characters; topic:param">
     </div>
     <div class="form-row">
         <label for="node-input-productIdOrSlug"><i class="fa fa-cubes"></i> Product ID</label>
@@ -536,7 +546,7 @@
         <code>Event</code></br>
         <p>Enter the Particle Event name you want to publish. 'spark' is reserved by the Particle Cloud and cannot be used.</p>
         <code>Data</code></br>
-        <p>Sets a data string to send along with the published Event (maximum 63 characters).</p>
+        <p>Sets a data string to send along with the published Event (from v0.8.0: maximum 622 characters).</p>
         <code>Product ID</code></br>
         <p>Add a Product ID or slug to publish event(s) meant only for the specified Product.</p>
         <code>Publish as a private event?</code></br>
@@ -559,6 +569,7 @@
     <h3>References</h3>
         <ul>
             <li><a href="https://docs.particle.io/reference/api/#publish-an-event" target="_blank">Particle Docs: Publish an event</a></li>
+            <li><a href="https://docs.particle.io/reference/device-os/firmware/photon/#cloud-functions" target="_blank">API field limits</a></li>
             <li><a href="https://github.com/chuank/node-red-contrib-particle" target="_blank">GitHub</a> - the node&apos;s github repository</li>
         </ul>
 </script>
@@ -568,8 +579,8 @@
         category: "Particle",
         defaults: {
             pcloud: { value: "", type: "particle-cloud" },
-            evtname: { value: "", validate: function (v) { return v != "spark"; } },
-            param: { value: "", validate: function (v) { return v.length < 64; } },
+            evtname: { value: "", validate: function (v) { return (v != "spark" || v.length < 65); } },
+            param: { value: "", validate: function (v) { return v.length < 623; } },
             productIdOrSlug: { value: "" },
             private: { value: false },
             evtnametopic: { value: false },
@@ -666,9 +677,9 @@
         <code>Device ID/Name</code></br>
         <p>Enter a Device ID or Name of the target Particle Device where the cloud Function originates from.</p>
         <code>Cloud Function</code></br>
-        <p>Enter the name of the Particle cloud Function.</p>
+        <p>Enter the name of the Particle cloud Function (maximum 64 characters as of v0.8.0).</p>
         <code>Parameter</code></br>
-        <p>Provide a (maximum) 63-byte string as parameter as required by your cloud Function.</p>
+        <p>Provide a (maximum as of v0.8.0) 622-byte string as parameter as required by your cloud Function.</p>
         <code>Product ID</code></br>
         <p>Add a Product ID or slug to call function(s) meant only for the specified Product.</p>
         <code>Call Function on start?</code></br>
@@ -682,6 +693,7 @@
     <h3>References</h3>
         <ul>
             <li><a href="https://docs.particle.io/" target="_blank">Particle Docs</a></li>
+            <li><a href="https://docs.particle.io/reference/device-os/firmware/photon/#cloud-functions" target="_blank">API field limits</a></li>
             <li><a href="https://github.com/chuank/node-red-contrib-particle" target="_blank">GitHub</a> - the node&apos;s github repository</li>
         </ul>
 </script>
@@ -692,8 +704,8 @@
         defaults: {
             pcloud: { value: "", type: "particle-cloud" },
             devid: { value: "", required: true },
-            fname: { value: "", required: true, validate: function (v) { return v.length < 13; } },
-            param: { value: "" },
+            fname: { value: "", required: true, validate: function (v) { return v.length < 65; } },
+            param: { value: "", validate: function (v) { return v.length < 623; } },
             productIdOrSlug: { value: "" },
             repeat: { value: 0, validate: function (v) { return v >= 0; } },
             once: { value: false }
@@ -784,7 +796,7 @@
         <code>Device ID/Name</code><br/>
         <p>Enter a Device ID or Name of the target Particle Device where the variable can be retrieved.</p>
         <code>Device Variable Name</code><br/>
-        <p>Enter the name of the Particle variable.</p>
+        <p>Enter the name of the Particle variable (maximum 64 characters as of v0.8.0).</p>
         <code>Product ID</code></br>
         <p>Add a Product ID or slug to call function(s) meant only for the specified Product.</p>
         <code>Repeat (sec)</code><br/>
@@ -798,6 +810,7 @@
     <h3>References</h3>
         <ul>
             <li><a href="https://docs.particle.io/" target="_blank">Particle Docs</a></li>
+            <li><a href="https://docs.particle.io/reference/device-os/firmware/photon/#cloud-functions" target="_blank">API field limits</a></li>
             <li><a href="https://github.com/chuank/node-red-contrib-particle" target="_blank">GitHub</a> - the node&apos;s github repository</li>
         </ul>
 </script>
@@ -808,7 +821,7 @@
         defaults: {
             pcloud: { value: "", type: "particle-cloud" },
             devid: { value: "", required: true },
-            getvar: { value: "", required: true, validate: function (v) { return v.length < 13; } },
+            getvar: { value: "", required: true, validate: function (v) { return v.length < 65; } },
             productIdOrSlug: { value: "" },
             repeat: { value: 0, validate: function (v) { return v >= 0; } },
             once: { value: false }

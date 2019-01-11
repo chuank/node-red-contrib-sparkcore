@@ -160,7 +160,8 @@ module.exports = function (RED) {
 						}
 					},
 					function (err) {
-						that.error(err);
+						that.error(err.body);
+						// that.trace(JSON.stringify(err));
 					}
 				).catch(function () {
 					that.error("Promise Rejected");
@@ -230,6 +231,10 @@ module.exports = function (RED) {
 			if (!val) {
 				if (val.topic === "evtname") {
 					that.evtname = val.payload;
+					if (that.evtname.length > 64) {
+						that.warn("Incoming SSE Event name > 64 chars, truncating...");
+						that.evtname = that.evtname.substring(0, 64);
+					}
 					that.propChanged = true;
 					that.trace("new eventname: " + that.evtname);
 					validOp = true;
@@ -299,16 +304,16 @@ module.exports = function (RED) {
 
 			// setup options depending on node settings
 			let options = {
-				auth: that.pcloud.credentials.accesstoken
+				auth: String(that.pcloud.credentials.accesstoken)
 			};
 
 			if (that.evtname) {
-				options.name = that.evtname;
+				options.name = String(that.evtname);
 			}
 
 			switch (that.subscribetype) {
 				case "devid":
-					options.deviceId = that.devprodslug;
+					options.deviceId = String(that.devprodslug);
 					break;
 				case "mine":
 					options.deviceId = "mine";
@@ -316,10 +321,10 @@ module.exports = function (RED) {
 				case "all":
 					break;
 				case "productIdOrSlug":
-					options.product = that.devprodslug;
+					options.product = String(that.devprodslug);
 					break;
 				case "orgSlug":
-					options.org = that.devprodslug;
+					options.org = String(that.devprodslug);
 					break;
 			}
 
@@ -355,7 +360,7 @@ module.exports = function (RED) {
 						shape: "ring",
 						text: "Error - refer to debug/log"
 					});
-					that.error(error);
+					that.error(error.body);
 				}).catch(function () {
 					that.error("Promise Rejected");
 				});
@@ -444,17 +449,36 @@ module.exports = function (RED) {
 			if (val) {
 				if (val.topic === "evtname") {			// set new Event name; does not trigger publish Event
 					that.evtname = val.payload;
+					if (that.evtname.length > 64) {
+						that.warn("Incoming Publish Event name > 64 chars, truncating...");
+						that.evtname = that.evtname.substring(0, 64);
+					}
 					that.propChanged = true;
 					that.trace("New published Event name: " + that.evtname);
 					validOp = true;
 				} else if (val.topic === "param") {		// new param (string data); trigger publish Event AND send param
-					val.payload = JSON.stringify(val.payload).substring(0, 63);	// stringify and limit to 63 chars
-					that.trace("New param: " + val.payload);
+					let pl = JSON.stringify(val.payload);
+					if (pl.length > 622) {
+						that.warn("Incoming Publish data > 622 chars, truncating...");
+						pl = pl.substring(0, 622);
+					}
+					that.param = pl;
+					that.trace("New param: " + that.param);
 					validOp = execPub = true;
 				} else if (that.evtnametopic && val.topic.length > 0) {
 					// alternative usage mode: if user has selected the "Send Event Name, Data as msg.topic/msg.payload" option
 					that.evtname = val.topic;
-					that.param = val.payload;
+					if (that.evtname.length > 64) {
+						that.warn("Incoming Publish Event name > 64 chars, truncating...");
+						that.evtname = that.evtname.substring(0, 64);
+					}
+
+					let pl = JSON.stringify(val.payload);
+					if (pl.length > 622) {
+						that.warn("Incoming Publish data > 622 chars, truncating...");
+						pl = pl.substring(0, 622);
+					}
+					that.param = pl;
 					that.trace("evtnametopic publish Event: " + that.evtname + " : " + that.param);
 					validOp = execPub = true;
 				} else if (val.topic === "private") {	// new private flag
@@ -474,6 +498,12 @@ module.exports = function (RED) {
 					validOp = repeatChanged = true;
 				} else if (!val.topic && val.payload) {
 					// an incoming message with ANY msg.payload and NO msg.topic is considered a 'shortcut' call.
+					let pl = JSON.stringify(val.payload);
+					if (pl.length > 622) {
+						that.warn("Incoming Publish data > 622 chars, truncating...");
+						pl = pl.substring(0, 622);
+					}
+					that.param = pl;
 					validOp = execPub = true;
 					that.trace("shortcut publish Event: " + that.evtname);
 				}
@@ -545,10 +575,10 @@ module.exports = function (RED) {
 		// Execute actual Publish Event call
 		this.on("callPublish", function () {
 			let options = {
-				name: that.evtname,
-				data: that.param,
+				name: String(that.evtname),
+				data: String(that.param),
 				isPrivate: that.private,
-				auth: that.pcloud.credentials.accesstoken
+				auth: String(that.pcloud.credentials.accesstoken)
 			};
 
 			if (that.productIdOrSlug) options.product = that.productIdOrSlug;
@@ -654,10 +684,18 @@ module.exports = function (RED) {
 					validOp = true;
 				} else if (val.topic === "fname") {
 					that.fname = val.payload;
+					if (that.fname.length > 64) {
+						that.warn("Incoming Function name > 64 chars, truncating...");
+						that.fname = that.fname.substring(0, 64);
+					}
 					that.trace("new funcName: " + that.fname);
 					validOp = true;
 				} else if (val.topic === "param") {
 					that.param = val.payload;
+					if (that.param.length > 622) {
+						that.warn("Incoming Function data > 622 chars, truncating...");
+						that.param = that.param.substring(0, 622);
+					}
 					that.trace("new param: " + that.param);
 					validOp = execFunc = true;
 				} else if (val.topic === "repeat") {
@@ -666,6 +704,10 @@ module.exports = function (RED) {
 					validOp = repeatChanged = true;
 				} else if (!val.topic && val.payload) { // 'shortcut' mode - easier way to call the function without specifying "param" as topic
 					that.param = val.payload;
+					if (that.param.length > 622) {
+						that.warn("Incoming Function data > 622 chars, truncating...");
+						that.param = that.param.substring(0, 622);
+					}
 					validOp = execFunc = true;
 					that.trace("shortcut func call: " + that.param);
 				}
@@ -734,10 +776,10 @@ module.exports = function (RED) {
 		// Execute actual Particle Device function call
 		this.on("callFunc", function () {
 			let options = {
-				auth: that.pcloud.credentials.accesstoken,
-				deviceId: that.devid,
-				name: that.fname,
-				argument: that.param
+				auth: String(that.pcloud.credentials.accesstoken),
+				deviceId: String(that.devid),
+				name: String(that.fname),
+				argument: String(that.param)
 			};
 
 			if (that.productIdOrSlug) options.product = that.productIdOrSlug;
@@ -761,7 +803,8 @@ module.exports = function (RED) {
 					}
 				},
 				function (err) {
-					that.error(err);
+					that.error(err.body);
+					// that.trace(JSON.stringify(err));
 				}
 			).catch(function () {
 				that.error("Promise Rejected");
@@ -847,6 +890,10 @@ module.exports = function (RED) {
 					validOp = true;
 				} else if (val.topic === "getvar") {
 					that.getvar = val.payload;
+					if (that.getvar.length > 64) {
+						that.warn("Incoming Variable name > 64 chars, truncating...");
+						that.getvar = that.getvar.substring(0, 64);
+					}
 					that.trace("new varName: " + that.getvar);
 					validOp = true;
 				} else if (val.topic === "repeat") {
@@ -908,9 +955,9 @@ module.exports = function (RED) {
 			if (that.productIdOrSlug) that.trace("\tProduct: " + that.productIdOrSlug);
 
 			let options = {
-				auth: that.pcloud.credentials.accesstoken,
-				deviceId: that.devid,
-				name: that.getvar,
+				auth: String(that.pcloud.credentials.accesstoken),
+				deviceId: String(that.devid),
+				name: String(that.getvar),
 			};
 
 			if (that.productIdOrSlug) options.product = that.productIdOrSlug;
@@ -930,6 +977,7 @@ module.exports = function (RED) {
 				},
 				function (err) {
 					that.error(err.body);
+					// that.trace(JSON.stringify(err));
 				}
 			).catch(function () {
 				that.error("Promise Rejected");
