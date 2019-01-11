@@ -11,7 +11,7 @@ Install
 
 Upgrading
 ---------
-IMPORTANT: v1.0.0 introduces a few major breaking changes as it now adopts the [Particle JS API](https://github.com/particle-iot/particle-api-js). The codebase has been updated to be in line with the latest Node-RED recommendations. The node names have also been changed for styling consistency with other nodes.
+IMPORTANT: >= v1.0.0 introduces a few major breaking changes as it now adopts the [Particle JS API](https://github.com/particle-iot/particle-api-js). The codebase has been updated to be in line with the latest Node-RED recommendations. The node names have also been changed for styling consistency with other nodes.
 
 The Manage Palette UI should upgrade dependencies without issue, so long as you restart your Node-RED server after. What you will encounter after the upgrade is 'missing' nodes due to the renaming of the Particle node names – please set up your Particle nodes again. Sorry.
 
@@ -21,6 +21,18 @@ If you are upgrading from a shell, run the following:
     npm install node-red-contrib-particle
 
 (Above assumes that your Node-RED user folder is set to `~/.node-red`)
+
+To make this upgrade smoother, in particular for flows that use a lot of these nodes, here are steps I used to make the transition more tolerable:
+
+1. Open two web browser windows of your current Node-RED admin UI. The second window serves as your older node settings
+2. Tile the browser windows side by side
+3. In the first tab, go to __Manage palette__ and upgrade `node-red-contrib-particle`
+4. Restart your Node-RED server using a terminal session
+5. Refresh the first tab of your web browser and acknolwedge the missing nodes. __DO NOT CLOSE OR REFRESH THE SECOND WINDOW__
+6. Manually add in the upgraded nodes into the FIRST window, referring to the settings from the second window
+7. Delete the older 'missing' nodes in the FIRST window
+8. Deploy the changes in the FIRST window
+9. Restart your Node-RED server using a terminal session
 
 
 Usage
