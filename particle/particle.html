@@ -275,9 +275,9 @@
     <h3>Inputs</h3>
         <dl class="message-properties">
             <dt class="optional">topic <span class="property-type">string</span></dt>
-            <dd> set topic to either <code>devid</code>, <code>evtname</code>, <code>strict</code>, <code>productIdOrSlug</code> or <code>orgSlug</code>.</dd>
+            <dd> set topic to either <code>devid</code>, <code>evtname</code>, <code>strict</code>, <code>productIdOrSlug</code>, <code>orgSlug</code> or <code>reconnect</code>.</dd>
             <dt class="optional">payload <span class="property-type">string</span></dt>
-            <dd> depending on <code>topic</code>, <code>payload</code> will set new Device ID / Event name / strict matching / Product ID (or slug) / Organization slug for the node.</dd>
+            <dd> depending on <code>topic</code>, <code>payload</code> will set new Device ID / Event name / strict matching / Product ID (or slug) / Organization slug for the node. Sending <code>reconnect</code> as the topic will force the SSE to reconnect.</dd>
         </dl>
     <h3>Outputs</h3>
         <dl class="message-properties">

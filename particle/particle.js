@@ -200,6 +200,7 @@ module.exports = function (RED) {
 		this.evtname = n.evtname;
 		this.strict = n.strict;
 		this.timeoutDelay = 5; // ms
+		this.keepaliveInterval = 5 * 60 * 1000; // ms; every 5 minutes
 
 		// keep track of updated state (for updating status icons)
 		this.propChanged = false;
@@ -220,6 +221,11 @@ module.exports = function (RED) {
 		setTimeout(function () {
 			that.emit("initSSE", {});
 		}, this.timeoutDelay);
+
+		// as an extra layer of sanity check, force reconnects at keepaliveInterval
+		setInterval(function () {
+			that.emit("initSSE", {});
+		}, this.keepaliveInterval);
 
 		// Called when there's input from upstream node(s)
 		this.on("input", function (msg) {
@@ -267,6 +273,8 @@ module.exports = function (RED) {
 						that.trace("new orgSlug: " + that.orgSlug);
 						validOp = true;
 					}
+				} else if (val.topic === "reconnect") {
+					validOp = true;
 				}
 			}
 
@@ -278,7 +286,7 @@ module.exports = function (RED) {
 					text: "Reconnecting..."
 				});
 
-				// only reconnect if we have a valid update
+				// only reconnect if we have a valid update to do
 				setTimeout(function () {
 					that.emit("initSSE", {});
 				}, that.timeoutDelay);
@@ -341,23 +349,45 @@ module.exports = function (RED) {
 					that.trace("Connected");
 
 					stream.on('event', function (data) {
-						let msg = { payload: data };
+						try {
+							let msg = { payload: data };
 
-						// BREAKING CHANGE: now passes the returned result from Particle as a JSON object as msg.payload
-						if (!that.strict) {
-							that.trace(JSON.stringify(data));
-							that.send(msg);
-						} else {
-							if (data.name === that.evtname) {
+							// BREAKING CHANGE: now passes the returned result from Particle as a JSON object as msg.payload
+							if (!that.strict) {
 								that.trace(JSON.stringify(data));
 								that.send(msg);
+							} else {
+								if (data.name === that.evtname) {
+									that.trace(JSON.stringify(data));
+									that.send(msg);
+								}
 							}
+						} catch (error) {
+							that.error(JSON.stringify(error));
 						}
 					});
+
+					stream.on('end', function () {
+						that.error("SSE eventstream ended! Attempting re-connect in 3 seconds...");
+
+						setTimeout(function () {
+							that.emit("initSSE", {});
+						}, 3 * 1000);
+					});
+
+					stream.on('error', function (error) {
+						that.status({
+							fill: "red",
+							shape: "dot",
+							text: "Stream error - refer to debug/log"
+						});
+						that.error(JSON.stringify(error));
+					});
+
 				}, function (error) {
 					that.status({
 						fill: "red",
-						shape: "ring",
+						shape: "dot",
 						text: "Error - refer to debug/log"
 					});
 					that.error(error.body);
@@ -367,6 +397,7 @@ module.exports = function (RED) {
 		});
 
 		this.on("close", function () {
+			// closing of node, NOT the eventstream
 			that.status({
 				fill: "grey",
 				shape: "dot",
