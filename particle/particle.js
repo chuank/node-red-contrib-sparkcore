@@ -223,7 +223,7 @@ module.exports = function (RED) {
 		}, this.timeoutDelay);
 
 		// as an extra layer of sanity check, force reconnects at keepaliveInterval
-		setInterval(function () {
+		this.particleinterval=setInterval(function () {
 			that.emit("initSSE", {});
 		}, this.keepaliveInterval);
 
@@ -403,6 +403,7 @@ module.exports = function (RED) {
 				shape: "dot",
 				text: "Closed"
 			});
+            clearInterval(that.particleinterval);
 			that.trace("Closed");
 
 			// close any pre-existing, open connections
