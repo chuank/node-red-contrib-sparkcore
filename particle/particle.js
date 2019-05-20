@@ -223,7 +223,7 @@ module.exports = function (RED) {
 		}, this.timeoutDelay);
 
 		// as an extra layer of sanity check, force reconnects at keepaliveInterval
-		setInterval(function () {
+		this.particleinterval=setInterval(function () {
 			that.emit("initSSE", {});
 		}, this.keepaliveInterval);
 
@@ -403,6 +403,7 @@ module.exports = function (RED) {
 				shape: "dot",
 				text: "Closed"
 			});
+            clearInterval(that.particleinterval);
 			that.trace("Closed");
 
 			// close any pre-existing, open connections
@@ -662,6 +663,7 @@ module.exports = function (RED) {
 		this.devid = n.devid;
 		this.fname = n.fname;
 		this.param = n.param;
+		this.payload = null;
 		this.productIdOrSlug = n.productIdOrSlug;
 		this.repeat = n.repeat * 1000;
 		this.interval_id = null;
@@ -734,7 +736,7 @@ module.exports = function (RED) {
 					that.trace("new repeat (ms): " + that.repeat);
 					validOp = repeatChanged = true;
 				} else if (!val.topic && val.payload) { // 'shortcut' mode - easier way to call the function without specifying "param" as topic
-					that.param = val.payload;
+					that.payload = val.payload;
 					if (that.param.length > 622) {
 						that.warn("Incoming Function data > 622 chars, truncating...");
 						that.param = that.param.substring(0, 622);
@@ -775,7 +777,7 @@ module.exports = function (RED) {
 				val = msg.payload;
 				// Retrieve payload as param
 				if (val && val.length > 0) {
-					that.param = val;
+                                        that.payload = val;
 				}
 
 				setTimeout(function () {
@@ -806,19 +808,37 @@ module.exports = function (RED) {
 
 		// Execute actual Particle Device function call
 		this.on("callFunc", function () {
+            var paramToSend=that.payload;
+            var deviceToSendTo=that.devid;
+            if (that.devid.trim().startsWith("{")){
+                    try{
+                            deviceToSendTo=eval("that."+that.devid.replace(/[{}]/g,''));
+                    } catch (e) {
+                            that.error("Error while parsing DeviceId substitution :"+e);
+                            return;
+                    }
+            }
+            if (that.param.trim().startsWith("{")){
+                    try{
+                            paramToSend=eval("that."+that.param.replace(/[{}]/g,''));
+                    } catch (e) {
+                            that.error("Error while parsing Parameter substitution :"+e);
+                            return;
+                    }
+            }
 			let options = {
 				auth: String(that.pcloud.credentials.accesstoken),
-				deviceId: String(that.devid),
+                                deviceId: String(deviceToSendTo),
 				name: String(that.fname),
-				argument: String(that.param)
+                                argument: String(paramToSend)
 			};
 
 			if (that.productIdOrSlug) options.product = that.productIdOrSlug;
 
 			that.trace("Calling function...");
-			that.trace("\t\tDevice ID: " + that.devid);
+			that.trace("\t\tDevice ID: " + deviceToSendTo);
 			that.trace("\t\tFunction Name: " + that.fname);
-			that.trace("\t\tParameter(s): " + that.param);
+			that.trace("\t\tParameter(s): " + paramToSend);
 
 			var fnPr = that.pcloud.particleJS.callFunction(options);
 			fnPr.then(
