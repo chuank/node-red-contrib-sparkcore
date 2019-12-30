@@ -299,6 +299,7 @@ module.exports = function (RED) {
 			if (that.stream) {
 				that.trace("### initSSE aborting pre-existing ES");
 				that.stream.abort();
+				that.stream.end();
 			}
 
 			that.status({
@@ -410,6 +411,7 @@ module.exports = function (RED) {
 			if (that.stream) {
 				that.trace("GC EventStream");
 				that.stream.abort();
+				that.stream.end();
 			}
 		});
 
