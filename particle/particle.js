@@ -168,8 +168,8 @@ module.exports = function(RED) {
 							// that.trace(JSON.stringify(err));
 						}
 					)
-					.catch(function() {
-						that.error('Promise Rejected');
+					.catch(function(error) {
+						that.error('Promise Error', error);
 					});
 			} else {
 				that.error('Invalid utility type');
@@ -412,8 +412,8 @@ module.exports = function(RED) {
 						that.error(error.body);
 					}
 				)
-				.catch(function() {
-					that.error('Promise Rejected');
+				.catch(function(error) {
+					that.error('Promise Error', error);
 				});
 		});
 
@@ -666,8 +666,8 @@ module.exports = function(RED) {
 						that.error('Failed to publish event: ' + err);
 					}
 				)
-				.catch(function() {
-					that.error('Promise Rejected');
+				.catch(function(error) {
+					that.error('Promise Error', error);
 				});
 
 			that.trace('Publishing event: ' + JSON.stringify(options));
@@ -902,8 +902,8 @@ module.exports = function(RED) {
 						// that.trace(JSON.stringify(err));
 					}
 				)
-				.catch(function() {
-					that.error('Promise Rejected');
+				.catch(function(error) {
+					that.error('Promise Error', error);
 				});
 		});
 
@@ -1081,8 +1081,8 @@ module.exports = function(RED) {
 						// that.trace(JSON.stringify(err));
 					}
 				)
-				.catch(function() {
-					that.error('Promise Rejected');
+				.catch(function(error) {
+					that.error('Promise Error', error);
 				});
 		});
 
