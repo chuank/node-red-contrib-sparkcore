@@ -31,7 +31,7 @@ module.exports = function(RED) {
 		// from your own Particle.io account since most JS API calls rely on a valid authentication
 		// token. Login mechanism (authentication, MFA) is not supported.
 
-		this.on('close', function(removed, done) {
+		this.on('close', (removed, done) => {
 			if (removed) {
 				that.trace('ParticleCloudNode config node removed');
 			} else {
@@ -84,7 +84,7 @@ module.exports = function(RED) {
 		}
 
 		// Called when there's input from upstream node(s)
-		this.on('input', function(msg, send, done) {
+		this.on('input', (msg, send, done) => {
 			// Retrieve all parameters from Message
 			let val = msg;
 			let validOp = false;
@@ -153,7 +153,7 @@ module.exports = function(RED) {
 
 				utilPr
 					.then(
-						function(data) {
+						data => {
 							if (data.statusCode == 200) {
 								that.trace('Utility call successful');
 								let msg = {
@@ -163,13 +163,13 @@ module.exports = function(RED) {
 								that.send(msg);
 							}
 						},
-						function(err) {
+						err => {
 							that.error(err.body, err);
 							// that.trace(JSON.stringify(err));
 						}
 					)
-					.catch(function(error) {
-						that.error('Promise Error', error);
+					.catch(error => {
+						that.error('Promise Error', that);
 					});
 			} else {
 				that.error('Invalid utility type');
@@ -178,7 +178,7 @@ module.exports = function(RED) {
 			if (done) done();
 		});
 
-		this.on('close', function(removed, done) {
+		this.on('close', (removed, done) => {
 			// close
 			if (done) done();
 		});
@@ -225,17 +225,17 @@ module.exports = function(RED) {
 			this.status({});
 		}
 
-		setTimeout(function() {
+		setTimeout(() => {
 			that.emit('initSSE', {});
 		}, this.timeoutDelay);
 
 		// as an extra layer of sanity check, force reconnects at keepaliveInterval
-		this.particleinterval = setInterval(function() {
+		this.particleinterval = setInterval(() => {
 			that.emit('initSSE', {});
 		}, this.keepaliveInterval);
 
 		// Called when there's input from upstream node(s)
-		this.on('input', function(msg, send, done) {
+		this.on('input', (msg, send, done) => {
 			// Retrieve all parameters from Message
 			let validOp = false;
 			let val = msg;
@@ -299,7 +299,7 @@ module.exports = function(RED) {
 				});
 
 				// only reconnect if we have a valid update to do
-				setTimeout(function() {
+				setTimeout(() => {
 					that.emit('initSSE', {});
 				}, that.timeoutDelay);
 			}
@@ -308,7 +308,7 @@ module.exports = function(RED) {
 		});
 
 		// SSE (Server-Sent-Event) Subscription
-		this.on('initSSE', function() {
+		this.on('initSSE', () => {
 			// sanity check: close any pre-existing, open connections
 			if (that.stream) {
 				that.trace('### initSSE aborting pre-existing ES');
@@ -354,7 +354,7 @@ module.exports = function(RED) {
 			that.pcloud.particleJS
 				.getEventStream(options)
 				.then(
-					function(stream) {
+					stream => {
 						// store reference to EventStream object returned by the Promise
 						that.stream = stream;
 
@@ -365,7 +365,7 @@ module.exports = function(RED) {
 						});
 						that.trace('Connected');
 
-						stream.on('event', function(data) {
+						stream.on('event', data => {
 							try {
 								let msg = { payload: data };
 
@@ -384,17 +384,17 @@ module.exports = function(RED) {
 							}
 						});
 
-						stream.on('end', function() {
+						stream.on('end', () => {
 							that.error(
 								'SSE eventstream ended! Attempting re-connect in 3 seconds...'
 							);
 
-							setTimeout(function() {
+							setTimeout(() => {
 								that.emit('initSSE', {});
 							}, 3 * 1000);
 						});
 
-						stream.on('error', function(error) {
+						stream.on('error', error => {
 							that.status({
 								fill: 'red',
 								shape: 'dot',
@@ -403,7 +403,7 @@ module.exports = function(RED) {
 							that.error(JSON.stringify(error));
 						});
 					},
-					function(error) {
+					error => {
 						that.status({
 							fill: 'red',
 							shape: 'dot',
@@ -412,12 +412,12 @@ module.exports = function(RED) {
 						that.error(error.body);
 					}
 				)
-				.catch(function(error) {
-					that.error('Promise Error', error);
+				.catch(error => {
+					that.error('Promise Error', that);
 				});
 		});
 
-		this.on('close', function(removed, done) {
+		this.on('close', (removed, done) => {
 			that.status({
 				fill: 'grey',
 				shape: 'dot',
@@ -490,13 +490,13 @@ module.exports = function(RED) {
 
 		if (this.once) {
 			// run on init, if requested
-			setTimeout(function() {
+			setTimeout(() => {
 				that.emit('callPublish', {});
 			}, this.timeoutDelay);
 		}
 
 		// Called when there's an input from upstream node(s)
-		this.on('input', function(msg, send, done) {
+		this.on('input', (msg, send, done) => {
 			// Retrieve all parameters from Message
 			let validOp = false;
 			let repeatChanged = false;
@@ -595,7 +595,7 @@ module.exports = function(RED) {
 					clearInterval(that.interval_id);
 					that.interval_id = null;
 
-					setTimeout(function() {
+					setTimeout(() => {
 						that.emit('processPublish', {});
 					}, that.timeoutDelay);
 				}
@@ -612,7 +612,7 @@ module.exports = function(RED) {
 					that.param = val.payload;
 				}
 
-				setTimeout(function() {
+				setTimeout(() => {
 					that.emit('processPublish', {});
 				}, that.timeoutDelay);
 			}
@@ -621,12 +621,12 @@ module.exports = function(RED) {
 		});
 
 		// Perform operations based on the method parameter.
-		this.on('processPublish', function() {
+		this.on('processPublish', () => {
 			// Check for repeat and start timer
 			if (that.repeat && !isNaN(that.repeat) && that.repeat > 0) {
 				that.trace('Setting new repeat rate (ms):', that.repeat);
 
-				that.interval_id = setInterval(function() {
+				that.interval_id = setInterval(() => {
 					that.emit('callPublish', {});
 				}, that.repeat);
 			}
@@ -634,14 +634,14 @@ module.exports = function(RED) {
 			else if (that.evtname && that.evtname.length > 0) {
 				that.trace('Event published');
 
-				setTimeout(function() {
+				setTimeout(() => {
 					that.emit('callPublish', {});
 				}, that.timeoutDelay);
 			}
 		});
 
 		// Execute actual Publish Event call
-		this.on('callPublish', function() {
+		this.on('callPublish', () => {
 			let options = {
 				name: String(that.evtname),
 				data: String(that.param),
@@ -655,25 +655,25 @@ module.exports = function(RED) {
 
 			publishEventPr
 				.then(
-					function(data) {
+					data => {
 						if (data.statusCode === 200) {
 							that.trace('Event published successfully');
 							let msg = { payload: true };
 							that.send(msg);
 						}
 					},
-					function(err) {
+					err => {
 						that.error('Failed to publish event: ' + err);
 					}
 				)
-				.catch(function(error) {
-					that.error('Promise Error', error);
+				.catch(error => {
+					that.error('Promise Error', that);
 				});
 
 			that.trace('Publishing event: ' + JSON.stringify(options));
 		});
 
-		this.on('close', function(removed, done) {
+		this.on('close', (removed, done) => {
 			if (that.interval_id) {
 				that.trace('Repeat interval closed.');
 				clearInterval(that.interval_id);
@@ -738,13 +738,13 @@ module.exports = function(RED) {
 
 		if (this.once) {
 			// run on init, if requested
-			setTimeout(function() {
+			setTimeout(() => {
 				that.emit('processFunc', {});
 			}, this.timeoutDelay);
 		}
 
 		// Called when there's an input from upstream node(s)
-		this.on('input', function(msg, send, done) {
+		this.on('input', (msg, send, done) => {
 			// Retrieve all parameters from Message
 			var validOp = false;
 			var repeatChanged = false;
@@ -810,7 +810,7 @@ module.exports = function(RED) {
 					clearInterval(that.interval_id);
 					that.interval_id = null;
 
-					setTimeout(function() {
+					setTimeout(() => {
 						that.emit('processFunc', {});
 					}, that.timeoutDelay);
 				}
@@ -823,7 +823,7 @@ module.exports = function(RED) {
 					that.payload = val;
 				}
 
-				setTimeout(function() {
+				setTimeout(() => {
 					that.emit('processFunc', {});
 				}, that.timeoutDelay);
 			}
@@ -832,25 +832,25 @@ module.exports = function(RED) {
 		});
 
 		// Call Particle Function
-		this.on('processFunc', function() {
+		this.on('processFunc', () => {
 			// Check for repeat and start timer
 			if (that.repeat && !isNaN(that.repeat) && that.repeat > 0) {
 				that.trace('new repeat (ms):', that.repeat);
 
-				that.interval_id = setInterval(function() {
+				that.interval_id = setInterval(() => {
 					that.emit('callFunc', {});
 				}, that.repeat);
 			}
 			// There is no repeat, just start once
 			else if (that.fname && that.fname.length > 0) {
-				setTimeout(function() {
+				setTimeout(() => {
 					that.emit('callFunc', {});
 				}, that.timeoutDelay);
 			}
 		});
 
 		// Execute actual Particle Device function call
-		this.on('callFunc', function() {
+		this.on('callFunc', () => {
 			var paramToSend = that.payload;
 			var deviceToSendTo = that.devid;
 			if (that.devid.trim().startsWith('{')) {
@@ -886,7 +886,7 @@ module.exports = function(RED) {
 			var fnPr = that.pcloud.particleJS.callFunction(options);
 			fnPr
 				.then(
-					function(data) {
+					data => {
 						if (data.statusCode == 200) {
 							that.trace('Function published successfully');
 							let msg = {
@@ -897,17 +897,17 @@ module.exports = function(RED) {
 							that.send(msg);
 						}
 					},
-					function(err) {
+					err => {
 						that.error(err.body, err);
 						// that.trace(JSON.stringify(err));
 					}
 				)
-				.catch(function(error) {
-					that.error('Promise Error', error);
+				.catch(error => {
+					that.error('Promise Error', that);
 				});
 		});
 
-		this.on('close', function(removed, done) {
+		this.on('close', (removed, done) => {
 			if (that.interval_id) {
 				that.trace('Interval closed.');
 				clearInterval(that.interval_id);
@@ -970,13 +970,13 @@ module.exports = function(RED) {
 
 		if (this.once) {
 			// run on init, if requested
-			setTimeout(function() {
+			setTimeout(() => {
 				that.emit('processVar', {});
 			}, this.timeoutDelay);
 		}
 
 		// Called when there's an input from upstream node(s)
-		this.on('input', function(msg) {
+		this.on('input', msg => {
 			// Retrieve all parameters from Message
 			var validOp = false;
 			var repeatChanged = false;
@@ -1017,37 +1017,37 @@ module.exports = function(RED) {
 					clearInterval(that.interval_id);
 					that.interval_id = null;
 
-					setTimeout(function() {
+					setTimeout(() => {
 						that.emit('processVar', {});
 					}, that.timeoutDelay);
 				}
 			} else {
 				// it's just a regular variable request; any incoming message (even 'empty' ones) are fine
 
-				setTimeout(function() {
+				setTimeout(() => {
 					that.emit('getVar', {});
 				}, that.timeoutDelay);
 			}
 		});
 
 		// Perform operations based on the method parameter.
-		this.on('processVar', function() {
+		this.on('processVar', () => {
 			// Check for repeat and start timer
 			if (that.repeat && !isNaN(that.repeat) && that.repeat > 0) {
-				that.interval_id = setInterval(function() {
+				that.interval_id = setInterval(() => {
 					that.emit('getVar', {});
 				}, that.repeat);
 			}
 			// There is no repeat, just start once
 			else if (that.getvar && that.getvar.length > 0) {
-				setTimeout(function() {
+				setTimeout(() => {
 					that.emit('getVar', {});
 				}, that.timeoutDelay);
 			}
 		});
 
 		// Read Particle Device variable
-		this.on('getVar', function() {
+		this.on('getVar', () => {
 			that.trace('Retrieving variable...');
 			that.trace('\t\tDevice ID: ' + that.devid);
 			that.trace('\t\tVariable Name: ' + that.getvar);
@@ -1065,7 +1065,7 @@ module.exports = function(RED) {
 			var vaPr = that.pcloud.particleJS.getVariable(options);
 			vaPr
 				.then(
-					function(data) {
+					data => {
 						if (data.statusCode == 200) {
 							that.trace('Variable retrieved successfully');
 							let msg = {
@@ -1076,17 +1076,17 @@ module.exports = function(RED) {
 							that.send(msg);
 						}
 					},
-					function(err) {
+					err => {
 						that.error(err.body, err);
 						// that.trace(JSON.stringify(err));
 					}
 				)
-				.catch(function(error) {
-					that.error('Promise Error', error);
+				.catch(error => {
+					that.error('Promise Error', that);
 				});
 		});
 
-		this.on('close', function(removed, done) {
+		this.on('close', (removed, done) => {
 			if (that.interval_id) {
 				that.trace('Interval closed.');
 				clearInterval(that.interval_id);
