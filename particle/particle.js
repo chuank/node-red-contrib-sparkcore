@@ -903,7 +903,7 @@ module.exports = function(RED) {
 					}
 				)
 				.catch(error => {
-					that.error('Promise Error', JSON.stringify(error));
+					that.error(JSON.stringify(error), JSON.stringify(error));
 				});
 		});
 
