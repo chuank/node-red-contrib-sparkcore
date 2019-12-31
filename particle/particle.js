@@ -152,24 +152,18 @@ module.exports = function(RED) {
 				}
 
 				utilPr
-					.then(
-						data => {
-							if (data.statusCode == 200) {
-								that.trace('Utility call successful');
-								let msg = {
-									payload: data.body,
-									statusCode: data.statusCode
-								};
-								that.send(msg);
-							}
-						},
-						err => {
-							that.error(err.body, err);
-							// that.trace(JSON.stringify(err));
+					.then(data => {
+						if (data.statusCode == 200) {
+							that.trace('Utility call successful');
+							let msg = {
+								payload: data.body,
+								statusCode: data.statusCode
+							};
+							that.send(msg);
 						}
-					)
-					.catch(error => {
-						that.error('Promise Error', that);
+					})
+					.catch(err => {
+						that.error(err.body.error, err.body);
 					});
 			} else {
 				that.error('Invalid utility type');
@@ -353,67 +347,62 @@ module.exports = function(RED) {
 
 			that.pcloud.particleJS
 				.getEventStream(options)
-				.then(
-					stream => {
-						// store reference to EventStream object returned by the Promise
-						that.stream = stream;
+				.then(stream => {
+					// store reference to EventStream object returned by the Promise
+					that.stream = stream;
 
-						that.status({
-							fill: 'green',
-							shape: that.propChanged ? 'ring' : 'dot',
-							text: that.propChanged ? 'Property UPDATED OK' : 'Connected'
-						});
-						that.trace('Connected');
+					that.status({
+						fill: 'green',
+						shape: that.propChanged ? 'ring' : 'dot',
+						text: that.propChanged ? 'Property UPDATED OK' : 'Connected'
+					});
+					that.trace('Connected');
 
-						stream.on('event', data => {
-							try {
-								let msg = { payload: data };
+					stream.on('event', data => {
+						try {
+							let msg = { payload: data };
 
-								// BREAKING CHANGE: now passes the returned result from Particle as a JSON object as msg.payload
-								if (!that.strict) {
+							// BREAKING CHANGE: now passes the returned result from Particle as a JSON object as msg.payload
+							if (!that.strict) {
+								that.trace(JSON.stringify(data));
+								that.send(msg);
+							} else {
+								if (data.name === that.evtname) {
 									that.trace(JSON.stringify(data));
 									that.send(msg);
-								} else {
-									if (data.name === that.evtname) {
-										that.trace(JSON.stringify(data));
-										that.send(msg);
-									}
 								}
-							} catch (error) {
-								that.error(JSON.stringify(error), error);
 							}
-						});
+						} catch (error) {
+							that.error(JSON.stringify(error), error);
+						}
+					});
 
-						stream.on('end', () => {
-							that.error(
-								'SSE eventstream ended! Attempting re-connect in 3 seconds...'
-							);
+					stream.on('end', () => {
+						that.error(
+							'SSE eventstream ended! Attempting re-connect in 3 seconds...'
+						);
 
-							setTimeout(() => {
-								that.emit('initSSE', {});
-							}, 3 * 1000);
-						});
+						setTimeout(() => {
+							that.emit('initSSE', {});
+						}, 3 * 1000);
+					});
 
-						stream.on('error', error => {
-							that.status({
-								fill: 'red',
-								shape: 'dot',
-								text: 'Stream error - refer to debug/log'
-							});
-							that.error(JSON.stringify(error));
-						});
-					},
-					error => {
+					stream.on('error', error => {
 						that.status({
 							fill: 'red',
 							shape: 'dot',
-							text: 'Error - refer to debug/log'
+							text: 'Stream error - refer to debug/log'
 						});
-						that.error(error.body);
-					}
-				)
-				.catch(error => {
-					that.error('Promise Error', that);
+						that.error(JSON.stringify(error));
+					});
+				})
+				.catch(err => {
+					that.status({
+						fill: 'red',
+						shape: 'dot',
+						text: 'Error - refer to debug/log'
+					});
+					that.error(err.body.error, err.body);
 				});
 		});
 
@@ -661,13 +650,10 @@ module.exports = function(RED) {
 							let msg = { payload: true };
 							that.send(msg);
 						}
-					},
-					err => {
-						that.error('Failed to publish event: ' + err);
 					}
 				)
-				.catch(error => {
-					that.error('Promise Error', that);
+				.catch(err => {
+					that.error(err.body.error, err.body);
 				});
 
 			that.trace('Publishing event: ' + JSON.stringify(options));
@@ -885,23 +871,17 @@ module.exports = function(RED) {
 
 			var fnPr = that.pcloud.particleJS.callFunction(options);
 			fnPr
-				.then(
-					data => {
-						if (data.statusCode == 200) {
-							that.trace('Function published successfully');
-							let msg = {
-								raw: data.body,
-								payload: data.body.return_value,
-								id: data.body.id
-							};
-							that.send(msg);
-						}
-					// },
-					// err => {
-					// 	that.error(err.body, err);
-					// 	// that.trace(JSON.stringify(err));
+				.then(data => {
+					if (data.statusCode == 200) {
+						that.trace('Function published successfully');
+						let msg = {
+							raw: data.body,
+							payload: data.body.return_value,
+							id: data.body.id
+						};
+						that.send(msg);
 					}
-				)
+				})
 				.catch(err => {
 					that.error(err.body.error, err.body);
 				});
@@ -1064,25 +1044,19 @@ module.exports = function(RED) {
 
 			var vaPr = that.pcloud.particleJS.getVariable(options);
 			vaPr
-				.then(
-					data => {
-						if (data.statusCode == 200) {
-							that.trace('Variable retrieved successfully');
-							let msg = {
-								raw: data.body,
-								payload: data.body.result,
-								id: data.body.coreInfo.deviceID
-							};
-							that.send(msg);
-						}
-					},
-					err => {
-						that.error(err.body, err);
-						// that.trace(JSON.stringify(err));
+				.then(data => {
+					if (data.statusCode == 200) {
+						that.trace('Variable retrieved successfully');
+						let msg = {
+							raw: data.body,
+							payload: data.body.result,
+							id: data.body.coreInfo.deviceID
+						};
+						that.send(msg);
 					}
-				)
-				.catch(error => {
-					that.error('Promise Error', that);
+				})
+				.catch(err => {
+					that.error(err.body.error, err.body);
 				});
 		});
 
