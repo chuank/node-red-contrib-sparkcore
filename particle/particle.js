@@ -896,14 +896,14 @@ module.exports = function(RED) {
 							};
 							that.send(msg);
 						}
-					},
-					err => {
-						that.error(err.body, err);
-						// that.trace(JSON.stringify(err));
+					// },
+					// err => {
+					// 	that.error(err.body, err);
+					// 	// that.trace(JSON.stringify(err));
 					}
 				)
-				.catch(error => {
-					that.error(JSON.stringify(error), JSON.stringify(error));
+				.catch(err => {
+					that.error(JSON.stringify(err), JSON.stringify(err));
 				});
 		});
 
