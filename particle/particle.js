@@ -901,10 +901,7 @@ module.exports = function(RED) {
 						that.error(err.body, err);
 						// that.trace(JSON.stringify(err));
 					}
-				)
-				.catch(error => {
-					that.error('Promise Error', that);
-				});
+				);
 		});
 
 		this.on('close', (removed, done) => {
