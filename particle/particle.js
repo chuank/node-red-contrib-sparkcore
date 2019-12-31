@@ -903,7 +903,7 @@ module.exports = function(RED) {
 					}
 				)
 				.catch(err => {
-					that.error(JSON.stringify(err), JSON.stringify(err));
+					that.error(err.body.error, err.body);
 				});
 		});
 
