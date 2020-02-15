@@ -62,6 +62,7 @@ module.exports = function(RED) {
 		this.pcloud = RED.nodes.getNode(n.pcloud);
 		this.utilitytype = n.utilitytype;
 		this.devid = n.devid;
+		this.payload = null;
 		this.productIdOrSlug = n.productIdOrSlug;
 		this.timeoutDelay = 5; // ms
 
@@ -116,15 +117,38 @@ module.exports = function(RED) {
 				}
 
 				that.trace('Calling utility: ' + that.utilitytype);
+                                var deviceToSendTo=that.devid;
+                                if (that.devid.trim().startsWith('{')){
+                                       try{
+                                          deviceToSendTo=eval('val.'+that.devid.replace(/[{}]/g,''));
+                                       } catch (e) {
+                                          that.error('Error while parsing DeviceId substitution :'+e);
+                                          return;
+                                       }
+                                }
 				switch (that.utilitytype) {
 					case 'listDevices':
 						validOp = true;
 						break;
+                                        case 'nameDevice':
+                                                validOp = true;
+                                                options.deviceId = deviceToSendTo;
+                                                options.name = val.payload;
+                                                break;
+                                        case 'claimDevice':
+                                                validOp = true;
+                                                options.deviceId = deviceToSendTo;
+                                                break;
 					case 'getDevice':
 					case 'signalDevice':
-						that.trace('\tDevice ID: ' + that.devid);
-						options.signal = val.payload == true; // convert payload into true/false (loose conversion)
-						options.deviceId = that.devid;
+                                                that.trace('\tDevice ID: ' + deviceToSendTo);
+                                                options.signal = (val.payload == true);         // convert payload into true/false (loose conversion)
+                                                options.deviceId = deviceToSendTo;
+                                                validOp = true;
+                                                break;
+                                        case 'addDeviceToProduct':
+                                                options.deviceId = deviceToSendTo;
+                                                options.product = val.payload;
 						validOp = true;
 						break;
 					default:
@@ -146,6 +170,18 @@ module.exports = function(RED) {
 					case 'getDevice':
 						utilPr = that.pcloud.particleJS.getDevice(options);
 						break;
+                                        case 'addDeviceToProduct':
+                                                that.trace('Add device to Product :'+JSON.stringify(options));
+                                                utilPr = that.pcloud.particleJS.addDeviceToProduct(options);
+                                                break;
+                                        case 'nameDevice':
+                                                that.trace('Naming a device :'+JSON.stringify(options));
+                                                utilPr = that.pcloud.particleJS.renameDevice(options);
+                                                break;
+                                        case 'claimDevice':
+                                                that.trace('Claiming a device :'+JSON.stringify(options));
+                                                utilPr = that.pcloud.particleJS.claimDevice(options);
+                                                break;
 					case 'signalDevice':
 						utilPr = that.pcloud.particleJS.signalDevice(options);
 						break;
