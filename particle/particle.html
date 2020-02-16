@@ -68,6 +68,9 @@
 	            <option value="listDevices">List devices claimed to the account or product</option>
 	            <option value="getDevice">Get detailed information about a device</option>
 	            <option value="signalDevice">Trigger rainbow pattern on device LED</option>
+                <option value="nameDevice">Renames a device</option>
+                <option value="claimDevice">Claims a device to the account</option>
+                <option value="addDeviceToProduct">Adds a device to a Product</option>
 	        </select>
 	    </div>
 	    <input type="hidden" id="node-input-utilitytype">
@@ -119,6 +122,7 @@
 	          <li><a href="https://docs.particle.io/reference/SDKs/javascript/#signaldevice-1" target="_blank">Trigger rainbow pattern on device LED</a></li>
 	          <li><a href="https://docs.particle.io/reference/SDKs/javascript/#listdevices" target="_blank">List devices claimed to the account or product</a></li>
 	          <li><a href="https://docs.particle.io/reference/SDKs/javascript/#getdevice" target="_blank">Get detailed information about a device</a></li>
+            <li><a href="https://docs.particle.io/reference/SDKs/javascript/#claimdevice" target="_blank">Claims a device to the account</a></li>
 	      </ul>
 	    </p>
 	    <code>Device ID/Name</code></br>
@@ -157,6 +161,9 @@
 					s = 'util: listDevices';
 					break;
 				case 'getDevice':
+                case "claimDevice":
+                case "nameDevice":
+                case "addDeviceToProduct":
 				case 'signalDevice':
 					s = 'util: ' + this.utilitytype;
 					if (this.devid === undefined || this.devid === '') {
@@ -198,6 +205,9 @@
 						$('#particle-utilitydevice-row').hide();
 						break;
 					case 'getDevice':
+                    case "claimDevice":
+                    case "nameDevice":
+                    case "addDeviceToProduct":
 					case 'signalDevice':
 						$('#particle-utilitylist-tip').hide();
 						$('#particle-utilitydevice-tip').show();
@@ -220,6 +230,9 @@
 					}
 					break;
 				case 'getDevice':
+                case "claimDevice":
+                case "nameDevice":
+                case "addDeviceToProduct":
 				case 'signalDevice':
 					break;
 			}
