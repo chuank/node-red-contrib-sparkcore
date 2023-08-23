@@ -11,7 +11,6 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "name1": "git://github.com/user/project.git#commit-ish",
     "particle-api-js": "^9.4.1"
   },
   "eslintConfig": {
