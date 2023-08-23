@@ -11,7 +11,8 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "particle-api-js": ""
+    "name1": "git://github.com/user/project.git#commit-ish",
+    "particle-api-js": "^9.4.1"
   },
   "eslintConfig": {
     "globals": {
@@ -24,6 +25,11 @@
   "node-red": {
     "nodes": {
       "particle": "particle/particle.js"
+    }
+  },
+  "overrides": {
+    "particle-api-js": {
+      "superagent": "^7.0.2"
     }
   },
   "keywords": [
