@@ -13,6 +13,12 @@
   "dependencies": {
     "particle-api-js": "chuank/particle-api-js"
   },
+  "overrides": {
+    "particle-api-js": {
+      "formidable": "^2",
+      "superagent": "^7.0.2"
+    }
+  },
   "eslintConfig": {
     "globals": {
       "RED": true
