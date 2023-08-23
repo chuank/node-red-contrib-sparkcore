@@ -11,12 +11,15 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "formidable": "^2.1.2",
+    "superagent": "^7.0.2",
+    "core-js": "^3.32.1",
     "particle-api-js": "^9.4.1"
   },
   "overrides": {
-    "formidable": "^2.1.2",
-    "superagent": "^7.0.2",
-    "core-js": "^3.32.1"
+    "formidable": "$formidable",
+    "superagent": "$superagent",
+    "core-js": "&core-js"
   },
   "eslintConfig": {
     "globals": {
