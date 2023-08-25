@@ -11,7 +11,13 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "particle-api-js": "chuank/particle-api-js"
+    "particle-api-js": "particle-api-js"
+  },
+  "overrides": {
+    "superagent": "^7.0.2",
+    "babel-runtime": {
+      "core-js": "^3.x"
+    }
   },
   "eslintConfig": {
     "globals": {
