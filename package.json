@@ -16,7 +16,8 @@
   "overrides": {
     "particle-api-js": {
       ".": "chuank/particle-api-js",
-      "superagent": "^7.0.2"
+      "superagent": "^7.0.2",
+      "babel-runtime": "^6.26.0"
     }
   },
   "eslintConfig": {
