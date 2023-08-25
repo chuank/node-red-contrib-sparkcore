@@ -11,7 +11,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "particle-api-js": ""
+    "particle-api-js": "chuank/particle-api-js"
   },
   "overrides": {
     "particle-api-js": {
