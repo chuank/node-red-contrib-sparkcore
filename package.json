@@ -14,7 +14,9 @@
     "particle-api-js": "^9.4.1"
   },
   "overrides": {
-    "superagent": "^7.0.2",
+    "particle-api-js": {
+      "superagent": "^7.0.2"
+    },
     "babel-runtime": {
       "core-js": "^3.x"
     }
