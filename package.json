@@ -16,7 +16,7 @@
   "overrides": {
     "particle-api-js": {
       ".": "chuank/particle-api-js",
-      "formidable": "^2",
+      "formidable": "^2.x",
       "superagent": "^7.0.2"
     }
   },
