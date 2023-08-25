@@ -15,8 +15,10 @@
   },
   "overrides": {
     "particle-api-js": {
-      ".": "^9.4.1",
-      "superagent": "^7.0.2"
+      "superagent": {
+        ".": "^7.x",
+        "formidable": "^2.x"
+      }
     }
   },
   "eslintConfig": {
