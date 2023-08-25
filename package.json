@@ -16,9 +16,7 @@
   "overrides": {
     "particle-api-js": {
       ".": "chuank/particle-api-js",
-      "formidable": "^2.x",
-      "superagent": "^7.0.2",
-      "core-js": "^3.25.1"
+      "superagent": "^7.0.2"
     }
   },
   "eslintConfig": {
