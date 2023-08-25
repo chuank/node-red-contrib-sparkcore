@@ -13,9 +13,6 @@
   "dependencies": {
     "particle-api-js": "^9.4.1"
   },
-  "overrides": {
-    "formidable": "^2.x"
-  },
   "eslintConfig": {
     "globals": {
       "RED": true
