@@ -18,7 +18,7 @@
       "superagent": "^7.0.2"
     },
     "babel-runtime": {
-      "core-js": "^3.x"
+      "core-js": "^2.x"
     }
   },
   "eslintConfig": {
